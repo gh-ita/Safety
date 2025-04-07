@@ -4,8 +4,18 @@ import json, os
 from resize_image import resize_with_padding
 
 """
-Classes : Safety vest, NO-Safety Vest, Hardhat, 
-No Hardhat, Gloves, Mask, No-Mask, Person, Safety Cone
+Model : Yolov8 
+Precision : 92.7%
+mAP : 84.1%
+Recall : 77.4%
+Classes : Safety vest, 
+NO-Safety Vest : checks whether the vest is worn or not
+Hardhat
+No Hardhat : checks whether the helmet is on the head
+Gloves, Mask
+No-Mask : checks whether the mask is worn or not 
+Person, Safety Cone
+The model detects the person then detect the other objects and checks whether the 
 """
 
 image_folder = "test/"
@@ -15,8 +25,8 @@ if not os.path.exists(image_folder) :
 if not os.path.exists(result_folder) :
     os.makedirs(result_folder)
     
-image_path = os.path.join(image_folder,"resized_test_image_2.jpg")
-result_path = os.path.join(result_folder,"resized_test_image_2_inference.jpg")
+image_path = os.path.join(image_folder,"worker_holding_helmet.jpg")
+result_path = os.path.join(result_folder,"worker_holding_helmet_inference.jpg")
 CLIENT = InferenceHTTPClient(
     api_url="https://detect.roboflow.com",
     api_key="AonDlnwLMihldiyHw3P9"
