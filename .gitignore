@@ -9,3 +9,4 @@ image/
 papers/
 Construction-Site-Safety/
 /img_embeddings.txt
+__pycache__/
