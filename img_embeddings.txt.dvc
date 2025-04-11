@@ -1,5 +1,0 @@
-outs:
-- md5: 7b61e33bfa94b4e6529075929eab5f03
-  size: 6140898
-  hash: md5
-  path: img_embeddings.txt

@@ -1,7 +1,7 @@
 from inference_sdk import InferenceHTTPClient
 from PIL import Image, ImageDraw, ImageFont
 import json, os
-from resize_image import resize_with_padding
+from yolov8.resize_image import resize_with_padding
 
 """
 Model : Yolov8 
