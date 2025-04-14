@@ -14,12 +14,13 @@ from PIL import Image
 import matplotlib.pyplot as plt 
 import numpy as np 
 import hashlib
+from ultralytics.data.utils import visualize_image_annotations
 
 IMAGE_FOLDER = "Construction-Site-Safety/data/images"
 LABEL_FOLDER = "Construction-Site-Safety/data/labels"
 IMG_FILE_LIST = sorted(os.listdir(IMAGE_FOLDER))
 LBL_FILE_LIST = sorted(os.listdir(LABEL_FOLDER))
-
+label_map = {0:"gloves",4:"no-gloves",1:"goggles",5:"no-goggles",2:"helmet",6:"no-helmet",3:"mask",7:"no-mask",10:"safety-vest",8:"no-safety-vest", 9:"person"}
 
 def empty_label_finder(label_folder_path):
     """
@@ -100,15 +101,15 @@ def get_img_class_combs(class_comb_list, img_list, lbl_folder, lbl_list):
 
 
 #Class person 
-combination = [6,9,10]
+combination = [1]
 class_combs = get_img_class_combs(combination, IMG_FILE_LIST, LABEL_FOLDER, LBL_FILE_LIST)
 class_combs_dict = {}
 for index,img_filename in enumerate(class_combs):
     img_name = os.path.splitext(img_filename[0])[0]
     class_combs_dict[img_name] = class_combs[index][1]
 print(f"count of images with the label {combination} objects {len(class_combs)}")
-remove_data(class_combs_dict,IMG_FILE_LIST, LBL_FILE_LIST, IMAGE_FOLDER, LABEL_FOLDER)
-
+#remove_data(class_combs_dict,IMG_FILE_LIST, LBL_FILE_LIST, IMAGE_FOLDER, LABEL_FOLDER)
+"""
 if class_combs :
     if len(class_combs) == 1 :
         grid_size = (1,1)
@@ -119,8 +120,8 @@ if class_combs :
         plt.tight_layout()
         plt.show()
     else :
-        grid_size = (1,4)
-        fig, axes = plt.subplots(grid_size[0], grid_size[1], figsize=(60, 60))
+        grid_size = (,10)
+        fig, axes = plt.subplots(grid_size[0], grid_size[1], figsize=(80, 60))
         axes = axes.flatten()
         for index, img in enumerate(class_combs) :
             image = Image.open(os.path.join(IMAGE_FOLDER, img[0]))
@@ -128,8 +129,16 @@ if class_combs :
             axes[index].imshow(image)
         plt.tight_layout()
         plt.show()
-
-
+"""
+count = 0
+lbl_ext = ".txt"
+for index, img in enumerate(class_combs):
+    count += 1
+    img_path = os.path.join(IMAGE_FOLDER, img[0])
+    lbl_name = os.path.splitext(img[0])[0]+lbl_ext
+    label_path = os.path.join(LABEL_FOLDER, lbl_name)
+    visualize_image_annotations(image_path = img_path, label_map = label_map,txt_path=label_path)
+    print(count)
 """
 redundancy_list = find_redundant_images(IMG_FILE_LIST, IMAGE_FOLDER)
 count = 0
