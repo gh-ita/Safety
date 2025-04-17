@@ -12,3 +12,5 @@ Construction-Site-Safety/
 __pycache__/
 /Construction-Site-Safety
 /data
+/rare_classes
+/splits
