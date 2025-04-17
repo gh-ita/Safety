@@ -1,6 +1,7 @@
 import mlflow
 import os
 import shutil
+import mlflow.tracking
 from datetime import datetime
 from ultralytics import YOLO
 
@@ -9,10 +10,10 @@ MODEL_NAME = "yolov12n"
 CONFIG_PATH = "yolo12n.pt"
 #DATA_PATH = "../Construction-Site-Safety/data.yaml"
 TEST_DATA_PATH = "../splits/test/data.yaml"           
-EXPERIMENT_NAME = "YOLOv11 Experiments"
+EXPERIMENT_NAME = "YOLOv12 Experiments"
 RUN_NAME = f"{MODEL_NAME}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-OUTPUT_DIR = "runs/detect/train"
-MODEL_OUTPUT = "models/yolo12/n"
+OUTPUT_DIR = f"runs/detect/{MODEL_NAME}"
+MODEL_OUTPUT = f"models/{MODEL_NAME}/"
 #hyperparameters 
 EPOCHS = 100
 BATCH = 16
@@ -47,7 +48,7 @@ for fold_idx, fold_data_path in enumerate(FOLD_PATHS):
         mlflow.log_param("weight decay",WEIGHT_DECAY)
         # Train the model
         model = YOLO(CONFIG_PATH)
-        model.train(data=fold_data_path, epochs=EPOCHS, batch = BATCH, profile = PROFILE, device = DEVICE)
+        model.train(data=fold_data_path, epochs=EPOCHS, batch = BATCH, profile = PROFILE, device = DEVICE, project = OUTPUT_DIR)
 
         # Copy best model to models/ folder
         best_model_path = os.path.join(OUTPUT_DIR, "weights", "best.pt")
@@ -64,7 +65,7 @@ for fold_idx, fold_data_path in enumerate(FOLD_PATHS):
         mlflow.log_metric("val_map", val_metrics.box.map)
         
         # Log performance metrics from separate test data - ADDED
-        test_metrics = model.val(data=TEST_DATA_PATH)
+        test_metrics = model.val(data=TEST_DATA_PATH,split='test')
         mlflow.log_metric("test_map50", test_metrics.box.map50)
         mlflow.log_metric("test_map", test_metrics.box.map)
         
@@ -74,7 +75,7 @@ for fold_idx, fold_data_path in enumerate(FOLD_PATHS):
 
         # === MLflow Model Registry Integration ===
         # Log the model to MLflow's registry
-        mlflow.pytorch.log_model(model, "model")
+        mlflow.log_artifact(fold_model_output, artifact_path="model")
 
         # Register the model to the registry
         model_uri = f"runs:/{run.info.run_id}/model"
@@ -88,5 +89,4 @@ for fold_idx, fold_data_path in enumerate(FOLD_PATHS):
             version=result.version,
             stage="Staging"
         )
-
         print(f"Model registered and transitioned to 'Staging' stage.")
