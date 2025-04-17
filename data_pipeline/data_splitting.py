@@ -109,17 +109,23 @@ def generate_folds(n_splits,
         print(f"\n🔁 Fold {fold + 1}")
         fold_dir = os.path.join(output_dir, f"fold_{fold}")
         
-        for split in ['train', 'val']:
-            os.makedirs(os.path.join(fold_dir, 'images', split), exist_ok=True)
-            os.makedirs(os.path.join(fold_dir, 'labels', split), exist_ok=True)
+        for split in ['train', 'valid']:
+            os.makedirs(os.path.join(fold_dir, split, 'images'), exist_ok=True)
+            os.makedirs(os.path.join(fold_dir, split, 'labels'), exist_ok=True)
 
-        for idx, split in [(train_idx, 'train'), (val_idx, 'val')]:
-            for img_name, lbl_name in zip(np.array(sorted_img_list)[idx], np.array(sorted_lbl_list)[idx]):
+        # Create a mapping between index lists and folder names
+        for idxs, split in [(train_idx, 'train'), (val_idx, 'valid')]:
+            for img_name, lbl_name in zip(np.array(sorted_img_list)[idxs], np.array(sorted_lbl_list)[idxs]):
+                # Define source paths
                 src_img = os.path.join(images_dir, img_name)
-                dst_img = os.path.join(fold_dir, 'images', split, img_name)
-                shutil.copyfile(src_img, dst_img)
                 src_lbl = os.path.join(labels_dir, lbl_name)
-                dst_lbl = os.path.join(fold_dir, 'labels', split, lbl_name)
+
+                # Define destination paths (nested structure)
+                dst_img = os.path.join(fold_dir, split, 'images', img_name)
+                dst_lbl = os.path.join(fold_dir, split, 'labels', lbl_name)
+
+                # Copy files
+                shutil.copyfile(src_img, dst_img)
                 shutil.copyfile(src_lbl, dst_lbl)
 
         print("Train:", len(train_idx), "Validation:", len(val_idx), "copied successfully.")
