@@ -7,7 +7,8 @@ from ultralytics import YOLO
 # === Configuration ===
 MODEL_NAME = "yolov11n"   
 CONFIG_PATH = "yolo11n.pt"
-DATA_PATH = "../Construction-Site-Safety/data.yaml"           
+#DATA_PATH = "../Construction-Site-Safety/data.yaml"
+TEST_DATA_PATH = "../splits/test/data.yaml"           
 EXPERIMENT_NAME = "YOLOv11 Experiments"
 RUN_NAME = f"{MODEL_NAME}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 OUTPUT_DIR = "runs/detect/train"
@@ -21,6 +22,7 @@ PROFILE = True
 FREEZE = 0
 DROPOUT = 0
 WEIGHT_DECAY = 0.0005
+DEVICE = 0
 
 # === Start MLflow tracking ===
 FOLD_PATHS = [
@@ -45,7 +47,7 @@ for fold_idx, fold_data_path in enumerate(FOLD_PATHS):
         mlflow.log_param("weight decay",WEIGHT_DECAY)
         # Train the model
         model = YOLO(CONFIG_PATH)
-        model.train(data=DATA_PATH, epochs=EPOCHS, batch = BATCH, profile = PROFILE)
+        model.train(data=fold_data_path, epochs=EPOCHS, batch = BATCH, profile = PROFILE, device = DEVICE)
 
         # Copy best model to models/ folder
         best_model_path = os.path.join(OUTPUT_DIR, "weights", "best.pt")
@@ -54,14 +56,21 @@ for fold_idx, fold_data_path in enumerate(FOLD_PATHS):
         shutil.copy(best_model_path, fold_model_output)
 
         # Log model artifact (raw file)
-        mlflow.log_artifact(MODEL_OUTPUT)
+        mlflow.log_artifact(fold_model_output)
 
-        # Optional: log performance metrics (requires you to extract them from validation)
-        metrics = model.val(data=DATA_PATH, split='test')
-        mlflow.log_metric("val_map50", metrics.box.map50)
-        mlflow.log_metric("val_map", metrics.box.map)
-
-        print(f"Finished training and tracking: {MODEL_OUTPUT}")
+        # Log performance metrics from fold's validation data
+        val_metrics = model.val(data=fold_data_path, split='val')
+        mlflow.log_metric("val_map50", val_metrics.box.map50)
+        mlflow.log_metric("val_map", val_metrics.box.map)
+        
+        # Log performance metrics from separate test data - ADDED
+        test_metrics = model.val(data=TEST_DATA_PATH)
+        mlflow.log_metric("test_map50", test_metrics.box.map50)
+        mlflow.log_metric("test_map", test_metrics.box.map)
+        
+        print(f"Finished training fold {fold_idx}")
+        print(f"Validation mAP50: {val_metrics.box.map50}")
+        print(f"Test mAP50: {test_metrics.box.map50}")
 
         # === MLflow Model Registry Integration ===
         # Log the model to MLflow's registry
@@ -72,12 +81,11 @@ for fold_idx, fold_data_path in enumerate(FOLD_PATHS):
         model_name_registry = f"{MODEL_NAME}_model" 
 
         # Register the model
-        mlflow.register_model(model_uri, model_name_registry)
-
         client = mlflow.tracking.MlflowClient()
+        result = mlflow.register_model(model_uri, model_name_registry)
         client.transition_model_version_stage(
             name=model_name_registry,
-            version=1,
+            version=result.version,
             stage="Staging"
         )
 
