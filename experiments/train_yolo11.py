@@ -14,6 +14,13 @@ RUN_NAME = f"{MODEL_NAME}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 OUTPUT_DIR = "runs/detect/train"
 MODEL_OUTPUT = "models/yolo11/n"
 #hyperparameters 
+epoch = 100
+batch = 16
+imgsz = 640
+lr = 
+profile = True 
+freeze = ???
+dropout or weight decay
 
 
 # === Start MLflow tracking ===
