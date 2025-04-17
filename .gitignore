@@ -2,7 +2,6 @@
 *.zip
 *.pyc
 result/
-test/
 Construction-Site-Safety-5/
 *.rar
 image/
@@ -13,4 +12,4 @@ __pycache__/
 /Construction-Site-Safety
 /data
 /rare_classes
-#/splits
+
