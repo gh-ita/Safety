@@ -1,6 +1,0 @@
-[core]
-    remote = myremote
-['remote "drive-remote"']
-    url = https://drive.google.com/drive/folders/1JNlSGEAMCGmSAI3T-xR_no_87x_2BTpI?usp=sharing
-['remote "myremote"']
-    url = gdrive://1JNlSGEAMCGmSAI3T-xR_no_87x_2BTpI

@@ -1,0 +1,6 @@
+artifact_location: /teamspace/studios/this_studio/SafetyScan/experiments/runs/mlflow/286240769187200315
+creation_time: 1744928119942
+experiment_id: '286240769187200315'
+last_update_time: 1744928119942
+lifecycle_stage: active
+name: runs/detect/yolov11n
