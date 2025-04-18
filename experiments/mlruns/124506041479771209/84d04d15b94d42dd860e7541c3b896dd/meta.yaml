@@ -1,0 +1,15 @@
+artifact_uri: file:///teamspace/studios/this_studio/SafetyScan/experiments/mlruns/124506041479771209/84d04d15b94d42dd860e7541c3b896dd/artifacts
+end_time: 1744936433947
+entry_point_name: ''
+experiment_id: '124506041479771209'
+lifecycle_stage: active
+run_id: 84d04d15b94d42dd860e7541c3b896dd
+run_name: yolov12n_fold0_20250418_001854
+run_uuid: 84d04d15b94d42dd860e7541c3b896dd
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1744935534725
+status: 3
+tags: []
+user_id: zeus
