@@ -1,0 +1,15 @@
+artifact_uri: /teamspace/studios/this_studio/SafetyScan/experiments/runs/mlflow/647401039335613545/f30641f365a149a1aab2ae934acdf0b5/artifacts
+end_time: 1745059628708
+entry_point_name: ''
+experiment_id: '647401039335613545'
+lifecycle_stage: active
+run_id: f30641f365a149a1aab2ae934acdf0b5
+run_name: train_i3
+run_uuid: f30641f365a149a1aab2ae934acdf0b5
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1745059003476
+status: 3
+tags: []
+user_id: zeus

@@ -8,12 +8,12 @@ from ultralytics import YOLO
 # === Configuration ===
 MODEL_NAME = "yolov11n"   
 CONFIG_PATH = "yolo11n.pt"
-#DATA_PATH = "../Construction-Site-Safety/data.yaml"
 TEST_DATA_PATH = "../splits/test/data.yaml"           
 EXPERIMENT_NAME = "YOLOv11 Experiments"
 RUN_NAME = f"{MODEL_NAME}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 OUTPUT_DIR = f"runs/detect/{MODEL_NAME}"
 MODEL_OUTPUT = f"models/{MODEL_NAME}/"
+
 #hyperparameters 
 EPOCHS = 100
 BATCH = 16
