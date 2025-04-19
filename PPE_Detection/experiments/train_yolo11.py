@@ -2,6 +2,7 @@ from ultralytics import YOLO
 from datetime import datetime
 import mlflow 
 import os 
+import numpy as np
 
 #metrics 
 #artifact
@@ -11,8 +12,9 @@ MODEL_CONFIG = "yolo11n.pt"
 EXPERIMENTATION = "PPE detection data version 1"
 RUN_NAME = f"{MODEL_NAME}_{datetime.now().strftime('%Y%m%d_%H%M%S')} trained on 5 folds"
 OUTPUT_DIR = f"runs/detect/{MODEL_NAME}"
-DATA = "../splits/kfold_base/fold_0/data.yaml"
-NAME = "train"
+TRAIN_NAME = "train"
+TEST_NAME = "train2"
+FOLDS = 5
 
 #hyperparameters
 EPOCHS = 100
@@ -25,8 +27,11 @@ DROPOUT = 0 #default
 WEIGHT_DECAY = 0.0005 #default
 DEVICE = 0
 
+box_losses = []
+cls_losses = []
+mAP_50s = []
+mAP_50_95s = []
 
-model = YOLO(MODEL_CONFIG)
 mlflow.set_experiment(EXPERIMENTATION)
 with mlflow.start_run(run_name = RUN_NAME) as run :
     #log hyperparameters 
@@ -36,8 +41,12 @@ with mlflow.start_run(run_name = RUN_NAME) as run :
     mlflow.log_param("Layers freezed",IMGSZ)
     mlflow.log_param("Dropout",DROPOUT)
     mlflow.log_param("Weight decay",WEIGHT_DECAY)
-    
-    model.train(
+        
+for i in range(FOLDS):
+    DATA = f"../splits/kfold_base/fold_{i}/data.yaml"
+    NAME = f"train_i"
+    model = YOLO(MODEL_CONFIG)
+    results = model.train(
                 data = DATA,
                 epochs = EPOCHS, 
                 batch = BATCH, 
@@ -47,17 +56,38 @@ with mlflow.start_run(run_name = RUN_NAME) as run :
                 project = OUTPUT_DIR,
                 name = NAME)
     
-    artifact = os.path.join(OUTPUT_DIR,NAME,"weights","best.pt")
-    #log model artifact
-    mlflow.log_artifact(artifact)
-    
-    #log evaluation metrics 
-    val_metrics = model.val(data = DATA, split= "test")
-    mlflow.log_metric("val_map50", val_metrics.box.map50)
-    mlflow.log_metric("val_map", val_metrics.box.map)
-    
-    print(f"Finished training fold")
-    print(f"Test mAP50: {val_metrics.box.map50}")
+    # Evaluate on test split
+    val_metrics = model.val(data=DATA, split="test",save_json=True)
+    # Collect metrics (use .results if required by your YOLO version)
+    box_losses.append(results.box_loss[-1])
+    cls_losses.append(results.cls_loss[-1])
+    mAP_50s.append(val_metrics.box.map50)
+    mAP_50_95s.append(val_metrics.box.map)
+
+avg_box_loss = np.mean(box_losses)
+avg_cls_loss = np.mean(cls_losses)
+avg_mAP_50 = np.mean(mAP_50s)
+avg_mAP_50_95 = np.mean(mAP_50_95s)
+
+#check the structure of the results object 
+#copy the test folder in each fold folder
+
+train_artifact = os.path.join(OUTPUT_DIR,TRAIN_NAME)
+test_artifact = os.path.join(OUTPUT_DIR,TEST_NAME)
+
+#log model artifact and result artifacts 
+mlflow.log_artifact('training artifact', train_artifact)
+mlflow.log_artifact('test artifact', test_artifact)
+
+#log evaluation metrics 
+mlflow.log_metric("Avg Box Loss", avg_box_loss)
+mlflow.log_metric("Avg Cls Loss", avg_cls_loss)
+mlflow.log_metric("Avg mAP@0.5", avg_mAP_50)
+mlflow.log_metric("Avg mAP@0.5:0.95", avg_mAP_50_95)
+
+print(f"Finished training fold")
+print(f"Test mAP50: {val_metrics.box.map50}")
+
     
 
     
