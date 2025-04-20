@@ -1,91 +1,78 @@
-import mlflow
 from rfdetr import RFDETRBase
+import mlflow 
+import supervision as sv
+from tqdm import tqdm
+from supervision.metrics import MeanAveragePrecision
+from PIL import Image
 import os
-import shutil
-from datetime import datetime
+import matplotlib.pyplot as plt
 
-# === Configuration ===
-MODEL_NAME = "RF-DETR Base"  
-TEST_DATA_PATH = "../RF-DETR_data/test/data.yaml"           
-EXPERIMENT_NAME = "RF-DETR Experiments"
-RUN_NAME = f"{MODEL_NAME}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-OUTPUT_DIR = f"runs/detect/train/{MODEL_NAME}"
-MODEL_OUTPUT = f"models/{MODEL_NAME}/"
-
-#hyperparameters 
+DATA = "../dataset"
 EPOCHS = 100
-BATCH = 16
-LR =  1e-4
+BATCH = 4
+LR = 1e-4
 GRAD_ACCUM_STEPS = 4
+EXPERIMENTATION = "PPE_detection_data_version 1/detect/yolo"
+TRAIN_NAME = "train_RF_DETR_BASE"
+TEST_NAME =  "train_RF_DETR_BASE2"
+OUTPUT_DIR = "PPE_detection_data_version 1/detect/yolo/train_RF_DETR_BASE"
+EARLY_STOPPING = True
 
-# === Start MLflow tracking ===
-FOLD_PATHS = [
-    "../RF-DETR_data/kfold_base/fold_0/train",
-    "../RF-DETR_data/kfold_base/fold_1/train",
-    "../RF-DETR_data/kfold_base/fold_2/train",
-    "../RF-DETR_data/kfold_base/fold_3/train",
-    "../RF-DETR_data/kfold_base/fold_4/train",
-]
-for fold_idx, fold_data_path in enumerate(FOLD_PATHS):
-    RUN_NAME = f"{MODEL_NAME}_fold{fold_idx}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-    mlflow.set_experiment(EXPERIMENT_NAME)
-    with mlflow.start_run(run_name=RUN_NAME) as run:
-        # Log hyperparameters
-        mlflow.log_param("fold", fold_idx)
-        mlflow.log_param("epochs", EPOCHS)
-        mlflow.log_param("learning rate", LR)
-        
-        # Train the model
-        model = RFDETRBase()
-        model.train(dataset_dir=fold_data_path, 
-                    epochs=EPOCHS, 
-                    batch_size=BATCH,
-                    grad_accum_steps=GRAD_ACCUM_STEPS, 
-                    lr=LR, 
-                    output_dir=OUTPUT_DIR,
-                    early_stopping = True,
-                    tensorboard = True)
-        
-        # Copy best model to models/ folder
-        best_model_path = os.path.join(OUTPUT_DIR, "weights", "best.pt")
-        fold_model_output = f"{MODEL_OUTPUT}_fold{fold_idx}.pt"
-        os.makedirs(MODEL_OUTPUT, exist_ok=True)
-        shutil.copy(best_model_path, fold_model_output)
+mlflow.set_tracking_uri("file:./mlruns")
+mlflow.set_experiment(EXPERIMENTATION)
 
-        # Log model artifact (raw file)
-        mlflow.log_artifact(fold_model_output)
-
-        # Log performance metrics from fold's validation data
-        val_metrics = model.val(data=fold_data_path, split='val')
-        mlflow.log_metric("val_map50", val_metrics.box.map50)
-        mlflow.log_metric("val_map", val_metrics.box.map)
-        
-        # Log performance metrics from separate test data - ADDED
-        test_metrics = model.val(data=TEST_DATA_PATH)
-        mlflow.log_metric("test_map50", test_metrics.box.map50)
-        mlflow.log_metric("test_map", test_metrics.box.map)
-        
-        print(f"Finished training fold {fold_idx}")
-        print(f"Validation mAP50: {val_metrics.box.map50}")
-        print(f"Test mAP50: {test_metrics.box.map50}")
-
-        # === MLflow Model Registry Integration ===
-        # Log the model to MLflow's registry
-        mlflow.pytorch.log_model(model, "model")
-
-        # Register the model to the registry
-        model_uri = f"runs:/{run.info.run_id}/model"
-        model_name_registry = f"{MODEL_NAME}_model" 
-
-        # Register the model
-        client = mlflow.tracking.MlflowClient()
-        result = mlflow.register_model(model_uri, model_name_registry)
-        client.transition_model_version_stage(
-            name=model_name_registry,
-            version=result.version,
-            stage="Staging"
-        )
-        print(f"Model registered and transitioned to 'Staging' stage.")
-if __name__ == "__main__" :
+with mlflow.start_run(run_name = TRAIN_NAME) as run :
+    mlflow.log_param("Epochs", EPOCHS)
+    mlflow.log_param("Batch", BATCH)
+    mlflow.log_param("learning_rate", LR)
+    mlflow.log_param("Gradient_accumulation_steps", GRAD_ACCUM_STEPS)
     model = RFDETRBase()
-    print(dir(model))
+    os.makedirs(OUTPUT_DIR, exist_ok=True)
+    model.train(dataset_dir = DATA, 
+                epochs = EPOCHS, 
+                batch_size = BATCH,
+                grad_accum_steps = GRAD_ACCUM_STEPS,
+                lr = LR,
+                early_stopping = EARLY_STOPPING,
+                output_dir = OUTPUT_DIR)
+    
+    targets = []
+    predictions = []
+    ds = sv.DetectionDataset.from_coco(
+        images_directory_path = f"{DATA}/test" ,
+        annotations_path = f"{DATA}/test/annotations.coco.json" ,
+    )
+    
+    for path, image, annotations in tqdm(ds):
+        image = Image.open(path)
+        detections = model.predict(image, threshold = 0.5)
+        
+        targets.append(annotations)
+        predictions.append(detections)
+    
+    #compute mAP
+    map_metric = MeanAveragePrecision()
+    map_result = map_metric.update(predictions, targets).compute()
+    mlflow.log_metric("test_mAP", map_result["mAP"])
+    
+    #plot mAP
+    map_fig = map_result.plot()
+    map_plot_path = os.path.join(OUTPUT_DIR, "map_plot.png")
+    map_fig.savefig(map_plot_path)
+    plt.close(map_fig)
+    
+    #compute confusion matrix
+    confusion_matrix = sv.ConfusionMatrix.from_detections(
+    predictions=predictions,
+    targets=targets,
+    classes=ds.classes
+    )
+    
+    #plot confusion matrix
+    cm_fig = confusion_matrix.plot()
+    cm_plot_path = os.path.join(OUTPUT_DIR, "confusion_matrix.png")
+    cm_fig.savefig(cm_plot_path)
+    plt.close(cm_fig)
+    
+    #log artifacts
+    mlflow.log_artifacts(OUTPUT_DIR, 'training_artifact')
