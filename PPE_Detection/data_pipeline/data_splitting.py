@@ -4,11 +4,14 @@ from sklearn.model_selection import StratifiedKFold, StratifiedShuffleSplit
 import shutil
 import numpy as np 
 from collections import Counter 
+import random
+import shutil
+from pathlib import Path
 
-LBL_DIR_PATH = "Construction-Site-Safety/data/labels"
-SORTED_LBL_LIST = sorted(os.listdir(LBL_DIR_PATH))
-IMG_DIR_PATH = "Construction-Site-Safety/data/images"
-SORTED_IMG_LIST = sorted(os.listdir(IMG_DIR_PATH))
+#LBL_DIR_PATH = "Construction-Site-Safety/data/labels"
+#SORTED_LBL_LIST = sorted(os.listdir(LBL_DIR_PATH))
+#IMG_DIR_PATH = "Construction-Site-Safety/data/images"
+#SORTED_IMG_LIST = sorted(os.listdir(IMG_DIR_PATH))
 
 def get_proxy_lbl(sorted_lbl_list, 
                   lbl_folder_path):
@@ -131,7 +134,63 @@ def generate_folds(n_splits,
         print("Train:", len(train_idx), "Validation:", len(val_idx), "copied successfully.")
 
 
+
+
+def split_yolo_dataset(
+    base_path,
+    train_ratio=0.64,
+    val_ratio=0.16,
+    test_ratio=0.2,
+    seed=42
+):
+    random.seed(seed)
+
+    images_path = os.path.join(base_path, "images")
+    labels_path = os.path.join(base_path, "labels")
+
+    # Get only image files that have corresponding labels
+    img_files = [f for f in os.listdir(images_path)
+                 if True and
+                 os.path.exists(os.path.join(labels_path, os.path.splitext(f)[0] + ".txt"))]
+
+    random.shuffle(img_files)
+    total = len(img_files)
+
+    train_end = int(total * train_ratio)
+    val_end = train_end + int(total * val_ratio)
+
+    splits = {
+        "train": img_files[:train_end],
+        "val": img_files[train_end:val_end],
+        "test": img_files[val_end:]
+    }
+
+    for split, files in splits.items():
+        for split_type in ["images", "labels"]:
+            split_dir = os.path.join(base_path, split, split_type)
+            os.makedirs(split_dir, exist_ok=True)
+
+        for img_file in files:
+            label_file = os.path.splitext(img_file)[0] + ".txt"
+
+            # Full paths for source files
+            src_img_path = os.path.join(images_path, img_file)
+            src_label_path = os.path.join(labels_path, label_file)
+
+            # Full paths for destination files
+            dest_img_path = os.path.join(base_path, split, "images", img_file)
+            dest_label_path = os.path.join(base_path, split, "labels", label_file)
+
+            shutil.copy(src_img_path, dest_img_path)
+            shutil.copy(src_label_path, dest_label_path)
+
+    print(f"✅ Split complete! Total: {total} -> Train: {len(splits['train'])}, Val: {len(splits['val'])}, Test: {len(splits['test'])}")
+
+    
+    
 if __name__ == "__main__":
+    split_yolo_dataset("../Construction-Site-Safety/data")
+    
     """
     proxy_lbls = get_proxy_lbl(SORTED_LBL_LIST, LBL_DIR_PATH)
     valid_images, valid_labels, valid_proxy_labels = filter_rare_classes(SORTED_IMG_LIST, 
@@ -142,7 +201,7 @@ if __name__ == "__main__":
                                                                         )
     state_flag = stratified_test_split(images_dir=IMG_DIR_PATH, labels_dir=LBL_DIR_PATH, image_files= valid_images, label_files=valid_labels,proxy_labels=valid_proxy_labels)
     print(state_flag)
-    if state_flag:"""
+    if state_flag:
     img_dir = "splits/kfold_base/images"
     lbl_dir = "splits/kfold_base/labels"
     sorted_img_list = sorted(os.listdir(img_dir))
@@ -154,4 +213,4 @@ if __name__ == "__main__":
                     proxy_lbls=fold_proxy_lbl,
                     images_dir=img_dir,
                     labels_dir=lbl_dir,
-                    output_dir="splits/kfold_base/")
+                    output_dir="splits/kfold_base/")"""

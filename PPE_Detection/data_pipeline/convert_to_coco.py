@@ -4,14 +4,14 @@ from PIL import Image
 import shutil
 
 
-yolo_labels_path = "splits/kfold_base/fold_1/valid/labels"        
-images_path = "splits/kfold_base/fold_1/valid/images"    
+yolo_labels_path = "splits/test/labels"        
+images_path = "splits/test/images"    
 sorted_img_list = sorted(os.listdir(images_path))
 sorted_lbl_list = sorted(os.listdir(yolo_labels_path))           
-output_json = "RF-DETR_data/kfold_base/fold_1/valid/valid_annotations.coco.json"
+output_json = "RF-DETR_data/kfold_base/test/_annotations.coco.json"
 class_names = ['Gloves', 'Goggles', 'Helmet', 'Mask', 'No-Gloves', 'No-Goggles', 'No-Helmet', 'No-Mask', 'No-Safety_Vest', 'Person', 'Safety_Vest']
-source_images_path = "splits/kfold_base/fold_1/valid/images"
-destination_images_path = "RF-DETR_data/kfold_base/fold_1/valid"
+source_images_path = "splits/test/images"
+destination_images_path = "RF-DETR_data/kfold_base/test"
 
 coco = {
     "info": {},
