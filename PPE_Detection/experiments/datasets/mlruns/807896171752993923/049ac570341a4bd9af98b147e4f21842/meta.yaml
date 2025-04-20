@@ -1,0 +1,15 @@
+artifact_uri: file:///teamspace/studios/this_studio/SafetyScan/experiments/datasets/mlruns/807896171752993923/049ac570341a4bd9af98b147e4f21842/artifacts
+end_time: 1745129558133
+entry_point_name: ''
+experiment_id: '807896171752993923'
+lifecycle_stage: active
+run_id: 049ac570341a4bd9af98b147e4f21842
+run_name: overjoyed-slug-911
+run_uuid: 049ac570341a4bd9af98b147e4f21842
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1745129558015
+status: 3
+tags: []
+user_id: zeus

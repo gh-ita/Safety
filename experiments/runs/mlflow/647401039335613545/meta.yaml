@@ -1,6 +1,0 @@
-artifact_location: /teamspace/studios/this_studio/SafetyScan/experiments/runs/mlflow/647401039335613545
-creation_time: 1745058327804
-experiment_id: '647401039335613545'
-last_update_time: 1745058327804
-lifecycle_stage: active
-name: runs/detect/yolo11n

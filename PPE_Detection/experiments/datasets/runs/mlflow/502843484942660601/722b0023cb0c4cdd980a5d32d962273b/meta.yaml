@@ -1,0 +1,15 @@
+artifact_uri: /teamspace/studios/this_studio/SafetyScan/experiments/datasets/runs/mlflow/502843484942660601/722b0023cb0c4cdd980a5d32d962273b/artifacts
+end_time: 1745126938213
+entry_point_name: ''
+experiment_id: '502843484942660601'
+lifecycle_stage: active
+run_id: 722b0023cb0c4cdd980a5d32d962273b
+run_name: train_yolo123
+run_uuid: 722b0023cb0c4cdd980a5d32d962273b
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1745125828656
+status: 3
+tags: []
+user_id: zeus

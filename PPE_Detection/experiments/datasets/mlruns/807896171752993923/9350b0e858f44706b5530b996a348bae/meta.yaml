@@ -1,0 +1,15 @@
+artifact_uri: file:///teamspace/studios/this_studio/SafetyScan/experiments/datasets/mlruns/807896171752993923/9350b0e858f44706b5530b996a348bae/artifacts
+end_time: 1745129545516
+entry_point_name: ''
+experiment_id: '807896171752993923'
+lifecycle_stage: active
+run_id: 9350b0e858f44706b5530b996a348bae
+run_name: train_yolo11
+run_uuid: 9350b0e858f44706b5530b996a348bae
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1745128367840
+status: 3
+tags: []
+user_id: zeus
