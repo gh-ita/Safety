@@ -15,4 +15,4 @@ PPE_Detection/rare_classes
 PPE_Detection/RF-DETR_data
 *.mp4
 *.txt
-RF-DETR.pth
+PPE_Detection/experiments/checkpoints/RF-DETR.pth
