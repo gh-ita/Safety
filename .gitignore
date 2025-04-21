@@ -13,3 +13,6 @@ PPE_Detection/Construction-Site-Safety
 PPE_Detection/data
 PPE_Detection/rare_classes
 PPE_Detection/RF-DETR_data
+*.mp4
+*.txt
+RF-DETR.pth
