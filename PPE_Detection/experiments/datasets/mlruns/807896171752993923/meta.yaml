@@ -1,6 +1,0 @@
-artifact_location: file:///teamspace/studios/this_studio/SafetyScan/experiments/datasets/mlruns/807896171752993923
-creation_time: 1745128367745
-experiment_id: '807896171752993923'
-last_update_time: 1745128367745
-lifecycle_stage: active
-name: PPE_detection_data_version 1/detect/yolo
