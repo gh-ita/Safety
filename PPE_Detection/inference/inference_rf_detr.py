@@ -22,7 +22,7 @@ writer = cv2.VideoWriter(output_path, fourcc, fps, (width, height))
 
 # Supervision annotator (set text and box styles here if needed)
 annotator = sv.BoxAnnotator()
-label_annotator = sv.LabelAnnotator(text_scale=1.0)
+label_annotator = sv.LabelAnnotator(text_scale=0.3, text_thickness=1)
 
 while cap.isOpened():
     ret, frame = cap.read()

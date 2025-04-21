@@ -16,3 +16,4 @@ PPE_Detection/RF-DETR_data
 *.mp4
 *.txt
 PPE_Detection/experiments/checkpoints/RF-DETR.pth
+PPE_Detection/inference/rf-detr-base.pth  
