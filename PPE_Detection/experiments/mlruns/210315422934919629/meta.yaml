@@ -1,0 +1,6 @@
+artifact_location: file:///c:/Users/ghita/OneDrive/Bureau/PFE/Safety/PPE_Detection/data_analysis/../experiments/mlruns/210315422934919629
+creation_time: 1745329166603
+experiment_id: '210315422934919629'
+last_update_time: 1745329166603
+lifecycle_stage: active
+name: PPE_detection_data_version 2/detect/yolo

@@ -5,8 +5,8 @@ import supervision as sv
 model = YOLO("../experiments/checkpoints/yolo11n.pt")
 
 # Input and output paths
-input_path = "../../test_video_trimmed.mp4"
-output_path = "annotated_output_yolo11n.mp4"
+input_path = "../../goggle_video.mp4"
+output_path = "annotated_goggle_output_yolo11n.mp4"
 
 # Open input video
 cap = cv2.VideoCapture(input_path)

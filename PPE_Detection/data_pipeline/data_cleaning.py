@@ -16,12 +16,12 @@ import numpy as np
 import hashlib
 from ultralytics.data.utils import visualize_image_annotations
 
-IMAGE_FOLDER = "Construction-Site-Safety/data/images"
-LABEL_FOLDER = "Construction-Site-Safety/data/labels"
+IMAGE_FOLDER = "../data/augmentation data/images"
+LABEL_FOLDER = "../data/augmentation data/labels"
 IMG_FILE_LIST = sorted(os.listdir(IMAGE_FOLDER))
 LBL_FILE_LIST = sorted(os.listdir(LABEL_FOLDER))
-label_map = {0:"gloves",4:"no-gloves",1:"goggles",5:"no-goggles",2:"helmet",6:"no-helmet",3:"mask",7:"no-mask",10:"safety-vest",8:"no-safety-vest", 9:"person"}
-
+label_map =  {1:"gloves", 2:"goggles",3:"helmet",4:"mask",5:"no-gloves", 6:"no-goggles",7:"no-helmet",8:"no-mask",9:"no-safety-vest",10:"person", 11:"safety-vest"}
+trgt_lbl_map = {"gloves":0, "goggles" : 1, "helmet" :2, "mask":3, "no-gloves" :4, "no-goggles": 5, "no-helmet":6, "no-mask":7, "no-safety-vest" :8, "person" : 9, "safety-vest" : 10}
 def empty_label_finder(label_folder_path):
     """
     The label folder and image folder must contain the same number of corresponding images and their label files
@@ -45,7 +45,7 @@ def check_image_label_index_similarity(label_folder_path, image_folder_path):
             same_order = False
     print(same_order)
     
-def remove_data(file_name_list, img_list, label_list, img_folder, label_folder) :
+def remove_bcgd_data(file_name_list, img_list, label_list, img_folder, label_folder) :
     """
     Removes the images and labels of the data that doesn't contain any annotations
     file_name_list : list of the files to erase
@@ -99,67 +99,42 @@ def get_img_class_combs(class_comb_list, img_list, lbl_folder, lbl_list):
         print("Class combination already erased")
         return None
 
-
-#Class person 
-combination = [1]
-class_combs = get_img_class_combs(combination, IMG_FILE_LIST, LABEL_FOLDER, LBL_FILE_LIST)
-class_combs_dict = {}
-for index,img_filename in enumerate(class_combs):
-    img_name = os.path.splitext(img_filename[0])[0]
-    class_combs_dict[img_name] = class_combs[index][1]
-print(f"count of images with the label {combination} objects {len(class_combs)}")
-#remove_data(class_combs_dict,IMG_FILE_LIST, LBL_FILE_LIST, IMAGE_FOLDER, LABEL_FOLDER)
-"""
-if class_combs :
-    if len(class_combs) == 1 :
-        grid_size = (1,1)
-        fig, axes = plt.subplots(grid_size[0], grid_size[1], figsize=(60, 60))
-        for index, img in enumerate(class_combs) :
-            image = Image.open(os.path.join(IMAGE_FOLDER, img[0]))
-            axes.imshow(image)
-        plt.tight_layout()
-        plt.show()
-    else :
-        grid_size = (,10)
-        fig, axes = plt.subplots(grid_size[0], grid_size[1], figsize=(80, 60))
-        axes = axes.flatten()
-        for index, img in enumerate(class_combs) :
-            image = Image.open(os.path.join(IMAGE_FOLDER, img[0]))
-            axes[index].axis('off')
-            axes[index].imshow(image)
-        plt.tight_layout()
-        plt.show()
-"""
-count = 0
-lbl_ext = ".txt"
-for index, img in enumerate(class_combs):
-    count += 1
-    img_path = os.path.join(IMAGE_FOLDER, img[0])
-    lbl_name = os.path.splitext(img[0])[0]+lbl_ext
-    label_path = os.path.join(LABEL_FOLDER, lbl_name)
-    visualize_image_annotations(image_path = img_path, label_map = label_map,txt_path=label_path)
-    print(count)
-"""
-redundancy_list = find_redundant_images(IMG_FILE_LIST, IMAGE_FOLDER)
-count = 0
-for img_list in redundancy_list.values():
-    if len(img_list) > 1 :
+def remove_clss(clss_id, img_folder,lbl_folder, img_list):
+    count = 0
+    files_to_remove = []
+    for img in img_list :
+        lbl_filename = os.path.splitext(img)[0]+ ".txt"
+        with open(os.path.join(lbl_folder, lbl_filename)) as lbl_file :
+            for line in lbl_file :
+                if int(line.split()[0]) == clss_id :
+                    files_to_remove.append(img)
+                    break
+    for file in files_to_remove :
         count += 1
-print(count)
-
-check_image_label_index_similarity(LABEL_FOLDER, IMAGE_FOLDER)
-empty_labels = empty_label_finder(LABEL_FOLDER)
-remove_data(empty_labels, IMG_FILE_LIST, LBL_FILE_LIST, IMAGE_FOLDER, LABEL_FOLDER)
-
-grid_size = (20,10)
-fig, axes = plt.subplots(grid_size[0], grid_size[1], figsize=(40, 40))
-axes = axes.flatten()
-count = 0
-for elem in empty_labels.values():  
-    count += 1
-    image = Image.open(os.path.join(IMAGE_FOLDER, img_file_list[elem]))
-    axes[count].axis('off')
-    axes[count].imshow(image)
+        print(count)
+        lbl_filename = os.path.splitext(file)[0]+ ".txt"
+        os.remove(os.path.join(img_folder, file))
+        os.remove(os.path.join(lbl_folder, lbl_filename))
     
-plt.tight_layout()
-plt.show()"""
+def remap_data(or_lbl_map, trgt_lbl_map, lbl_folder, lbl_list):
+    count = 0
+    for lbl_file in lbl_list :
+        new_lines = []
+        with open(os.path.join(lbl_folder, lbl_file), "r") as file :
+            for line in file :
+                parts = line.strip().split()
+                or_clss = int(parts[0])
+                trgt_clss = trgt_lbl_map[or_lbl_map[or_clss]]
+                new_line = " ".join([str(trgt_clss)]+parts[1:])
+                new_lines.append(new_line)
+        with open(os.path.join(lbl_folder, lbl_file), "w") as file:
+            for line in new_lines:
+                file.write(line + "\n")
+        count += 1
+    print(f"remaped {count} files")
+                
+                
+
+if __name__ == "__main__":
+    #remove_clss(0,IMAGE_FOLDER, LABEL_FOLDER, IMG_FILE_LIST)
+    remap_data(or_lbl_map=label_map, trgt_lbl_map=trgt_lbl_map, lbl_folder=LABEL_FOLDER, lbl_list=LBL_FILE_LIST)
