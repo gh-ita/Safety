@@ -27,14 +27,16 @@ strong_neg_augment = A.Compose([
 ])
 
 
-def freeze_annot(label_path, clss_prc_dict, seed=42):
+
+def freeze_annot(label_path, clss_prc_dict, seed=42, output_path=None):
     """
-    Comment out a percentage of annotations for specific classes in a label file.
+    Remove a percentage of annotations for specific classes in a label file.
     
     Args:
         label_path (str): Path to the YOLO annotation file.
-        clss_prc_dict (dict): Dictionary like {class_id: percentage_to_comment_out}.
+        clss_prc_dict (dict): Dictionary like {class_id: percentage_to_remove}.
         seed (int): Random seed for reproducibility.
+        output_path (str): Optional path to save the modified file. If None, overwrite the original.
     """
     random.seed(seed)
     
@@ -43,27 +45,29 @@ def freeze_annot(label_path, clss_prc_dict, seed=42):
 
     new_lines = []
     for class_id in clss_prc_dict:
+        # Get lines for the current class
         clss_lines = [line for line in lines if line.split()[0] == str(class_id)]
         other_lines = [line for line in lines if line.split()[0] != str(class_id)]
 
         prc = clss_prc_dict[class_id]
-        n_to_comment = int(len(clss_lines) * prc)
-        lines_to_comment = random.sample(clss_lines, n_to_comment)
-        lines_to_keep = [line for line in clss_lines if line not in lines_to_comment]
+        n_to_remove = int(len(clss_lines) * prc)
+        lines_to_remove = random.sample(clss_lines, n_to_remove)
 
-        # Comment out selected lines
-        commented_lines = [f"# {line}" for line in lines_to_comment]
+        # Remove the selected lines
+        clss_lines = [line for line in clss_lines if line not in lines_to_remove]
 
-        # Combine everything
-        lines = other_lines + lines_to_keep + commented_lines
+        # Add the remaining class lines and other lines to new_lines
+        new_lines.extend(other_lines + clss_lines)
 
-    lines.sort(key=lambda x: x.replace("// ", "") if x.startswith("#") else x)
+    # Decide where to save the modified content
+    save_path = output_path if output_path else label_path
 
-    with open(label_path, 'w') as f:
-        for line in lines:
+    # Save the modified content back to the file
+    with open(save_path, 'w') as f:
+        for line in new_lines:
             f.write(line + '\n')
 
-import os
+
 
 def unfreeze_annot(label_path):
     for fname in os.listdir(label_path):
@@ -90,8 +94,7 @@ def unfreeze_annot(label_path):
 if __name__ == "__main__":
     
     label_list = os.listdir("../data/augmentation data/labels")
-    unfreeze_annot("../data/augmentation data/labels")
-    """"
+
     for file in label_list :
-        freeze_annot(label_path= os.path.join("../data/augmentation data/labels", file), clss_prc_dict={0:0.3, 9:1})
-    """
+        #freeze_annot(label_path= os.path.join("../data/augmentation data/labels", file), clss_prc_dict={0:0.3, 9:1})
+        freeze_annot(label_path=os.path.join("../data/augmentation data/labels", file), clss_prc_dict={0: 0.3, 9: 0.5}, output_path=os.path.join("../data/augmentation data/aug_labels", file))

@@ -41,7 +41,6 @@ def merge_data(img_list, trgt_img_folder, trgt_lbl_folder,
             if os.path.isfile(src_img_path): 
                 shutil.copy2(src_img_path, dst_img_path)
                 print(f"Copied: {src_img_path} → {dst_img_path}")
-
         for filename in os.listdir(src_lbl_folder):
             src_lbl_path = os.path.join(src_lbl_folder, filename)
             dst_lbl_path = os.path.join(trgt_lbl_folder, filename)
@@ -80,7 +79,7 @@ def merge_data(img_list, trgt_img_folder, trgt_lbl_folder,
 if __name__ == "__main__" :
     merge_data(None, src_img_folder="../data/data/augmented_negatives/images",
                src_lbl_folder="../data/data/augmented_negatives/labels",
-               trgt_img_folder="../data/augmentation data/images",
-               trgt_lbl_folder="../data/augmentation data/labels")
+               trgt_img_folder="../data/data/images",
+               trgt_lbl_folder="../data/data/labels")
 
     
