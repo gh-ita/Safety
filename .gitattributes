@@ -3,3 +3,5 @@
 data_analysis.ipynb filter=lfs diff=lfs merge=lfs -text
 data_analysis_or.ipynb filter=lfs diff=lfs merge=lfs -text
 data_dashboard.ipynb filter=lfs diff=lfs merge=lfs -text
+PPE_Detection/experiments/checkpoints/RF-DETR.pth filter=lfs diff=lfs merge=lfs -text
+PPE_Detection/inference/rf-detr-base.pth filter=lfs diff=lfs merge=lfs -text
