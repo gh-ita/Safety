@@ -14,6 +14,8 @@ PPE_Detection/data
 PPE_Detection/rare_classes
 PPE_Detection/RF-DETR_data
 *.mp4
+PPE_Detection/experiments/PPE_detection_data_version 1/detect/yolo/train_rf_detr_base/RF-DETR.pth
+./PPE_Detection/experiments/PPE_detection_data_version 1/detect/yolo/train_rf_detr_base/RF-DETR.pth
 *.txt
 PPE_Detection/experiments/checkpoints/RF-DETR.pth
 PPE_Detection/inference/rf-detr-base.pth 
