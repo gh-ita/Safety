@@ -17,4 +17,3 @@ PPE_Detection/RF-DETR_data
 *.txt
 PPE_Detection/experiments/checkpoints/RF-DETR.pth
 PPE_Detection/inference/rf-detr-base.pth 
-./PPE_Detection/inference/rf-detr-base.pth 
