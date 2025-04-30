@@ -1,10 +1,17 @@
 #mask, gloves, no glove, goggles, no goggles 
 import os 
 import shutil
+import matplotlib.pyplot as plt
+import matplotlib.image as mpimg
+import time
+
 
 LBL_FOLDER = "../data/augmentation data/labels"
 
 def extract_imgs(clss_list, lbl_folder):
+    """
+    returns the filenames
+    """
     file_list = set()
     lbl_list = os.listdir(lbl_folder)
     for clss_id in clss_list :
@@ -75,11 +82,70 @@ def merge_data(img_list, trgt_img_folder, trgt_lbl_folder,
                 print(f"Label not found: {src_lbl_path}")
     print(count)
 
+
+
+def copy_files(source_folder, destination_folder, files_to_copy=None):
+    """
+    Copies files from the source folder to the destination folder.
+
+    Parameters:
+    - source_folder (str): Path to the folder containing the files.
+    - destination_folder (str): Path to the folder where files will be copied.
+    - files_to_copy (list, optional): List of filenames to copy. 
+      If None, all files in the source folder will be copied.
+
+    Returns:
+    - copied_files (list): List of files successfully copied.
+    - not_found_files (list): List of files not found in the source folder.
+    """
+    copied_files = []
+    not_found_files = []
+
+    if not os.path.exists(destination_folder):
+        os.makedirs(destination_folder)
+
+    if files_to_copy is None:
+        files_to_copy = [
+            f for f in os.listdir(source_folder)
+            if os.path.isfile(os.path.join(source_folder, f))
+        ]
+
+    for filename in files_to_copy:
+        src_path = os.path.join(source_folder, filename)
+        dst_path = os.path.join(destination_folder, filename)
+        if os.path.exists(src_path):
+            shutil.copy2(src_path, dst_path)  # copy2 preserves metadata
+            copied_files.append(filename)
+        else:
+            not_found_files.append(filename)
+    print(len(copied_files))
+    return copied_files, not_found_files
+
+
+def show_images_one_by_one(filenames, folder_path, delay=0):
+    for filename in filenames:
+        full_path = os.path.join(folder_path, filename+".jpg")
+        img = mpimg.imread(full_path)
+
+        plt.imshow(img)
+        plt.axis('off')
+        plt.title(filename)
+        plt.show()
+        
+        time.sleep(delay)  
+        plt.close()
+
+
     
 if __name__ == "__main__" :
-    merge_data(None, src_img_folder="../data/data/augmented_negatives/images",
-               src_lbl_folder="../data/data/augmented_negatives/labels",
-               trgt_img_folder="../data/data/images",
-               trgt_lbl_folder="../data/data/labels")
+    #copy_files("PPE_Detection/data/yolo/val/images","PPE_Detection/data/images")
+    """
+    merge_data(None, src_img_folder="../data/augmentation data/augmented_negatives/images",
+               src_lbl_folder="../data/augmentation data/augmented_negatives/labels",
+               trgt_img_folder="../data/augmentation data/images",
+               trgt_lbl_folder="../data/augmentation data/labels")"""
+
+    filename_list = extract_imgs([5], "PPE_Detection/data/labels")
+    show_images_one_by_one(filename_list, "PPE_Detection/data/images")
 
     

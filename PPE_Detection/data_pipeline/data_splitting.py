@@ -8,9 +8,9 @@ import random
 import shutil
 from pathlib import Path
 
-#LBL_DIR_PATH = "Construction-Site-Safety/data/labels"
+LBL_DIR_PATH = "../data/augmentation_data/labels"
 #SORTED_LBL_LIST = sorted(os.listdir(LBL_DIR_PATH))
-#IMG_DIR_PATH = "Construction-Site-Safety/data/images"
+IMG_DIR_PATH = "../data/augmentation_data/images"
 #SORTED_IMG_LIST = sorted(os.listdir(IMG_DIR_PATH))
 
 def get_proxy_lbl(sorted_lbl_list, 
@@ -186,11 +186,60 @@ def split_yolo_dataset(
 
     print(f"✅ Split complete! Total: {total} -> Train: {len(splits['train'])}, Val: {len(splits['val'])}, Test: {len(splits['test'])}")
 
+def select_class_data(clss_id, 
+                      img_folder,
+                      lbl_folder):
+    clss_img_list = []
+    clss_lbl_list = []
+    img_list = sorted(os.listdir(img_folder))
+    lbl_list = sorted(os.listdir(lbl_folder))
+    for index, lbl_file in enumerate(lbl_list) :
+        lbl_path = os.path.join(lbl_folder, lbl_file)
+        with open(lbl_path, "r") as lbls :
+            for line in lbls :
+                clss = line.split()[0]
+                if int(clss) == clss_id :
+                    clss_img_list.append(img_list[index])
+                    clss_lbl_list.append(lbl_file)
+                    break
+                    
+    return clss_img_list, clss_lbl_list 
+
+def remove_annot(clss_id, lbl_folder):
+    
+    lbl_list = os.listdir(lbl_folder)
+    for lbl_file in lbl_list :
+        file_new_lbl = []
+        lbl_path = os.path.join(lbl_folder, lbl_file)
+        with open(lbl_path , "r") as lbls :
+            for line in lbls :
+                clss = int(line.split()[0])
+                if clss == clss_id :
+                    file_new_lbl.append(line)
+        print(file_new_lbl)       
+        with open(lbl_path, "w") as lbls:
+            lbls.writelines(file_new_lbl)                                      
+    
     
     
 if __name__ == "__main__":
-    split_yolo_dataset("../Construction-Site-Safety/data")
-    
+    dest_img_folder = "../data/augmentation_data/mask/images"
+    dest_lbl_folder = "../data/augmentation_data/mask/labels"
+    remove_annot(3, dest_lbl_folder)
+    """
+    img_list, lbl_list = select_class_data(3, IMG_DIR_PATH, LBL_DIR_PATH)
+
+    for lbl in lbl_list :
+        src_lbl_path = os.path.join(LBL_DIR_PATH, lbl)
+        dest_lbl_path = os.path.join(dest_lbl_folder, lbl)
+        shutil.copy2(src_lbl_path, dest_lbl_path)
+    for img in img_list :
+        src_img_path = os.path.join(IMG_DIR_PATH, img)
+        dest_img_path = os.path.join(dest_img_folder, img)
+        shutil.copy2(src_img_path, dest_img_path)
+        
+    """
+    #split_yolo_dataset("../Construction-Site-Safety/data")
     """
     proxy_lbls = get_proxy_lbl(SORTED_LBL_LIST, LBL_DIR_PATH)
     valid_images, valid_labels, valid_proxy_labels = filter_rare_classes(SORTED_IMG_LIST, 

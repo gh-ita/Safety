@@ -115,6 +115,7 @@ def remove_clss(clss_id, img_folder,lbl_folder, img_list):
         lbl_filename = os.path.splitext(file)[0]+ ".txt"
         os.remove(os.path.join(img_folder, file))
         os.remove(os.path.join(lbl_folder, lbl_filename))
+    print(f"removed {count} images")
     
 def remap_data(or_lbl_map, trgt_lbl_map, lbl_folder, lbl_list):
     count = 0
@@ -132,9 +133,41 @@ def remap_data(or_lbl_map, trgt_lbl_map, lbl_folder, lbl_list):
                 file.write(line + "\n")
         count += 1
     print(f"remaped {count} files")
-                
+
+
+def remove_files_from_folder(folder_path, files_to_remove):
+    """
+    Removes specified files from a given folder.
+
+    Parameters:
+    - folder_path (str): Path to the folder containing the files.
+    - files_to_remove (list): List of filenames (not full paths) to remove.
+
+    Returns:
+    - removed_files (list): List of successfully removed files.
+    - not_found_files (list): List of files that were not found.
+    """
+    removed_files = []
+    not_found_files = []
+
+    for filename in files_to_remove:
+        file_path = os.path.join(folder_path, filename)
+        if os.path.exists(file_path):
+            os.remove(file_path)
+            removed_files.append(filename)
+        else:
+            not_found_files.append(filename)
+    print(len(removed_files))
+    return removed_files, not_found_files
+
                 
 
 if __name__ == "__main__":
-    #remove_clss(0,IMAGE_FOLDER, LABEL_FOLDER, IMG_FILE_LIST)
+    remove_clss(0,IMAGE_FOLDER, LABEL_FOLDER, IMG_FILE_LIST)
+    IMG_FILE_LIST = sorted(os.listdir(IMAGE_FOLDER))
+    LBL_FILE_LIST = sorted(os.listdir(LABEL_FOLDER))
     remap_data(or_lbl_map=label_map, trgt_lbl_map=trgt_lbl_map, lbl_folder=LABEL_FOLDER, lbl_list=LBL_FILE_LIST)
+    """lbl_to_remove = os.listdir("../data/augmentation data/augmented_negatives/labels")
+    remove_files_from_folder("../data/augmentation data/labels", lbl_to_remove)
+    img_to_remove = os.listdir("../data/augmentation data/augmented_negatives/images")
+    remove_files_from_folder("../data/augmentation data/images", img_to_remove)"""

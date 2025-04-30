@@ -1,0 +1,6 @@
+outs:
+- md5: 3f93cf5fc15ad2bfbda77b237674565d.dir
+  size: 10717224
+  nfiles: 224
+  hash: md5
+  path: augmented_negatives
