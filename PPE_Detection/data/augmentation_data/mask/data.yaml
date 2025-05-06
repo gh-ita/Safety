@@ -1,0 +1,13 @@
+train: /train/images
+val: /val/images
+test: /test/images
+
+nc: 11
+names: ['Gloves', 'Goggles', 'Helmet', 'Mask', 'No-Gloves', 'No-Goggles', 'No-Helmet', 'No-Mask', 'No-Safety_Vest', 'Person', 'Safety_Vest']
+
+roboflow:
+  workspace: bib-detection-ogsde
+  project: ppe2.0-5yyzh
+  version: 4
+  license: Public Domain
+  url: https://universe.roboflow.com/bib-detection-ogsde/ppe2.0-5yyzh/dataset/4

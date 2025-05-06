@@ -1,9 +1,13 @@
 import os
 import cv2
 import shutil
-import albumentations as A
 from data_merging import extract_imgs
 import random
+import albumentations as A
+from albumentations import (
+    Compose, HorizontalFlip, RandomBrightnessContrast, ShiftScaleRotate, BboxParams
+)
+from glob import glob
 
 # Paths
 IMG_FOLDER = '../data/data/images'
@@ -91,10 +95,79 @@ def unfreeze_annot(label_path):
             f.writelines(new_lines)
 
 
+
+
+transform = Compose([
+    HorizontalFlip(p=0.5),
+    ShiftScaleRotate(shift_limit=0.05, scale_limit=0.05, rotate_limit=10, p=0.5),
+    RandomBrightnessContrast(p=0.2),
+],
+bbox_params=BboxParams(
+    format='yolo',
+    label_fields=['class_labels'],
+    min_visibility=0.0,
+    check_each_transform=False,
+    clip=True  
+))
+
+def augment_image(image_path, label_path, save_dir_img, save_dir_lbl, n_aug=2):
+    image = cv2.imread(image_path)
+    h, w = image.shape[:2]
+
+    with open(label_path, 'r') as f:
+        lines = f.readlines()
+
+    bboxes = []
+    class_labels = []
+
+    for line in lines:
+        parts = line.strip().split()
+        cls = int(parts[0])
+        bbox = list(map(float, parts[1:]))
+        bboxes.append(bbox)
+        class_labels.append(cls)
+
+    for i in range(n_aug):
+        augmented = transform(image=image, bboxes=bboxes, class_labels=class_labels)
+        aug_img = augmented['image']
+        aug_bboxes = augmented['bboxes']
+        aug_labels = augmented['class_labels']
+
+        # Save augmented image
+        aug_img_name = os.path.splitext(os.path.basename(image_path))[0] + f"_aug{i}.jpg"
+        cv2.imwrite(os.path.join(save_dir_img, aug_img_name), aug_img)
+
+        # Save corresponding label
+        aug_lbl_name = aug_img_name.replace('.jpg', '.txt')
+        with open(os.path.join(save_dir_lbl, aug_lbl_name), 'w') as f:
+            for lbl, box in zip(aug_labels, aug_bboxes):
+                f.write(f"{lbl} {' '.join(map(str, box))}\n")
+
+
 if __name__ == "__main__":
-    
+    image_dir = "../data/merged_data/no-gloves/images"
+    label_dir = "../data/merged_data/no-gloves/labels"
+    save_dir_img = "../data/merged_data/augmented_data_2/no-gloves/images"
+    save_dir_lbl = "../data/merged_data/augmented_data_2/no-gloves/labels"
+
+    # Loop through each image file
+    for img_file in os.listdir(image_dir):
+        if not img_file.lower().endswith(('.jpg', '.jpeg', '.png')):
+            continue  # Skip non-image files
+        
+        image_path = os.path.join(image_dir, img_file)
+        label_path = os.path.join(label_dir, os.path.splitext(img_file)[0] + ".txt")
+
+        augment_image(
+            image_path=image_path,
+            label_path=label_path,
+            save_dir_img=save_dir_img,
+            save_dir_lbl=save_dir_lbl
+        )
+    """
     label_list = os.listdir("../data/augmentation data/labels")
 
     for file in label_list :
         #freeze_annot(label_path= os.path.join("../data/augmentation data/labels", file), clss_prc_dict={0:0.3, 9:1})
         freeze_annot(label_path=os.path.join("../data/augmentation data/labels", file), clss_prc_dict={0: 0.3, 9: 0.5}, output_path=os.path.join("../data/augmentation data/aug_labels", file))
+    """

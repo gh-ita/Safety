@@ -18,8 +18,8 @@ from ultralytics.data.utils import visualize_image_annotations
 
 IMAGE_FOLDER = "../data/augmentation data/images"
 LABEL_FOLDER = "../data/augmentation data/labels"
-IMG_FILE_LIST = sorted(os.listdir(IMAGE_FOLDER))
-LBL_FILE_LIST = sorted(os.listdir(LABEL_FOLDER))
+#IMG_FILE_LIST = sorted(os.listdir(IMAGE_FOLDER))
+#LBL_FILE_LIST = sorted(os.listdir(LABEL_FOLDER))
 label_map =  {1:"gloves", 2:"goggles",3:"helmet",4:"mask",5:"no-gloves", 6:"no-goggles",7:"no-helmet",8:"no-mask",9:"no-safety-vest",10:"person", 11:"safety-vest"}
 trgt_lbl_map = {"gloves":0, "goggles" : 1, "helmet" :2, "mask":3, "no-gloves" :4, "no-goggles": 5, "no-helmet":6, "no-mask":7, "no-safety-vest" :8, "person" : 9, "safety-vest" : 10}
 def empty_label_finder(label_folder_path):
@@ -160,14 +160,40 @@ def remove_files_from_folder(folder_path, files_to_remove):
     print(len(removed_files))
     return removed_files, not_found_files
 
+
+def fix_class_ids_in_labels(labels_dir):
+    for filename in os.listdir(labels_dir):
+        if not filename.endswith(".txt"):
+            continue  
+
+        label_path = os.path.join(labels_dir, filename)
+        new_lines = []
+
+        with open(label_path, "r") as f:
+            for line in f:
+                parts = line.strip().split()
+                if len(parts) < 5:
+                    continue  # skip malformed lines
+
+
+                try:
+                    class_id = str(int(float(parts[0])))  # safe conversion
+                    rest = parts[1:]
+                    new_line = " ".join([class_id] + rest)
+                    new_lines.append(new_line)
+                except ValueError:
+                    print(f"Warning: Skipping invalid line in {filename}: {line.strip()}")
+
+        # Overwrite file with corrected lines
+        with open(label_path, "w") as f:
+            f.write("\n".join(new_lines) + "\n")
+
+    print("✅ Class ID corrections complete.")
+
+
+
                 
 
 if __name__ == "__main__":
-    remove_clss(0,IMAGE_FOLDER, LABEL_FOLDER, IMG_FILE_LIST)
-    IMG_FILE_LIST = sorted(os.listdir(IMAGE_FOLDER))
-    LBL_FILE_LIST = sorted(os.listdir(LABEL_FOLDER))
-    remap_data(or_lbl_map=label_map, trgt_lbl_map=trgt_lbl_map, lbl_folder=LABEL_FOLDER, lbl_list=LBL_FILE_LIST)
-    """lbl_to_remove = os.listdir("../data/augmentation data/augmented_negatives/labels")
-    remove_files_from_folder("../data/augmentation data/labels", lbl_to_remove)
-    img_to_remove = os.listdir("../data/augmentation data/augmented_negatives/images")
-    remove_files_from_folder("../data/augmentation data/images", img_to_remove)"""
+
+    fix_class_ids_in_labels("../data/merged_data/augmented_data_2/labels")

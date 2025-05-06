@@ -139,13 +139,11 @@ def show_images_one_by_one(filenames, folder_path, delay=0):
     
 if __name__ == "__main__" :
     #copy_files("PPE_Detection/data/yolo/val/images","PPE_Detection/data/images")
-    """
-    merge_data(None, src_img_folder="../data/augmentation data/augmented_negatives/images",
-               src_lbl_folder="../data/augmentation data/augmented_negatives/labels",
-               trgt_img_folder="../data/augmentation data/images",
-               trgt_lbl_folder="../data/augmentation data/labels")"""
+    
+    merge_data(None, src_img_folder="../data/merged_data/augmented_data_2/no-goggles/images",
+               src_lbl_folder="../data/merged_data/augmented_data_2/no-goggles/labels",
+               trgt_img_folder="../data/merged_data/augmented_data_2/images",
+               trgt_lbl_folder="../data/merged_data/augmented_data_2/labels")
 
-    filename_list = extract_imgs([5], "PPE_Detection/data/labels")
-    show_images_one_by_one(filename_list, "PPE_Detection/data/images")
 
     

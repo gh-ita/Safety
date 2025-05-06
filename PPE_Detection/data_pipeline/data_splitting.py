@@ -8,10 +8,10 @@ import random
 import shutil
 from pathlib import Path
 
-LBL_DIR_PATH = "../data/augmentation_data/labels"
-#SORTED_LBL_LIST = sorted(os.listdir(LBL_DIR_PATH))
-IMG_DIR_PATH = "../data/augmentation_data/images"
-#SORTED_IMG_LIST = sorted(os.listdir(IMG_DIR_PATH))
+LBL_DIR_PATH = "../data/merged_data/labels"
+SORTED_LBL_LIST = sorted(os.listdir(LBL_DIR_PATH))
+IMG_DIR_PATH = "../data/merged_data/images"
+SORTED_IMG_LIST = sorted(os.listdir(IMG_DIR_PATH))
 
 def get_proxy_lbl(sorted_lbl_list, 
                   lbl_folder_path):
@@ -40,6 +40,8 @@ def filter_rare_classes(images,
     Filters out samples whose proxy label appears less than `min_count` times.
     Saves the rare class images and labels into a separate folder.
     """
+    valid_img_dir = "../data/augmentation_data/mask/filtered_data/images"
+    valid_lbl_dir = "../data/augmentation_data/mask/filtered_data/labels"
     counts = Counter(proxy_labels)
     rare_indices = [i for i, lbl in enumerate(proxy_labels) if counts[lbl] < min_count]
     rare_img_dir = os.path.join(output_dir, "images")
@@ -54,11 +56,18 @@ def filter_rare_classes(images,
         shutil.copy(os.path.join(labels_dir, lbl_name), os.path.join(rare_lbl_dir, lbl_name))
     print(f"Filtered {len(rare_indices)} rare class samples into {output_dir}.")
     
+
+        
     valid_indices = [i for i in range(len(proxy_labels)) if counts[proxy_labels[i]] >= min_count]
     valid_images = [images[i] for i in valid_indices]
     valid_labels = [labels[i] for i in valid_indices]
     valid_proxy_labels = [proxy_labels[i] for i in valid_indices]
     
+    for idx in valid_indices:
+        img_name = images[idx]
+        lbl_name = labels[idx]
+        shutil.copy(os.path.join(images_dir, img_name), os.path.join(valid_img_dir, img_name))
+        shutil.copy(os.path.join(labels_dir, lbl_name), os.path.join(valid_lbl_dir, lbl_name))
     return valid_images, valid_labels, valid_proxy_labels
 
 def stratified_test_split(
@@ -138,8 +147,8 @@ def generate_folds(n_splits,
 
 def split_yolo_dataset(
     base_path,
-    train_ratio=0.64,
-    val_ratio=0.16,
+    train_ratio=0.7,
+    val_ratio=0.1,
     test_ratio=0.2,
     seed=42
 ):
@@ -223,31 +232,37 @@ def remove_annot(clss_id, lbl_folder):
     
     
 if __name__ == "__main__":
-    dest_img_folder = "../data/augmentation_data/mask/images"
-    dest_lbl_folder = "../data/augmentation_data/mask/labels"
-    remove_annot(3, dest_lbl_folder)
-    """
-    img_list, lbl_list = select_class_data(3, IMG_DIR_PATH, LBL_DIR_PATH)
-
+    #4
+    dest_img_folder = "../data/merged_data/no-goggles/images"
+    dest_lbl_folder = "../data/merged_data/no-goggles/labels"
+    
+    img_list, lbl_list = select_class_data(5, IMG_DIR_PATH, LBL_DIR_PATH)
+    
     for lbl in lbl_list :
         src_lbl_path = os.path.join(LBL_DIR_PATH, lbl)
         dest_lbl_path = os.path.join(dest_lbl_folder, lbl)
         shutil.copy2(src_lbl_path, dest_lbl_path)
+    
+    #split_yolo_dataset(base_path="../data/augmentation_data/mask/")
+    
+    """
     for img in img_list :
         src_img_path = os.path.join(IMG_DIR_PATH, img)
         dest_img_path = os.path.join(dest_img_folder, img)
         shutil.copy2(src_img_path, dest_img_path)
-        
+    """  
+    
     """
     #split_yolo_dataset("../Construction-Site-Safety/data")
-    """
     proxy_lbls = get_proxy_lbl(SORTED_LBL_LIST, LBL_DIR_PATH)
     valid_images, valid_labels, valid_proxy_labels = filter_rare_classes(SORTED_IMG_LIST, 
                                                                         SORTED_LBL_LIST,
                                                                         proxy_lbls,
                                                                         IMG_DIR_PATH,
-                                                                        LBL_DIR_PATH
-                                                                        )
+                                                                        LBL_DIR_PATH)
+    
+    """
+    """                                                     
     state_flag = stratified_test_split(images_dir=IMG_DIR_PATH, labels_dir=LBL_DIR_PATH, image_files= valid_images, label_files=valid_labels,proxy_labels=valid_proxy_labels)
     print(state_flag)
     if state_flag:
@@ -263,3 +278,4 @@ if __name__ == "__main__":
                     images_dir=img_dir,
                     labels_dir=lbl_dir,
                     output_dir="splits/kfold_base/")"""
+    

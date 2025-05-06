@@ -19,3 +19,4 @@ PPE_Detection/inference/rf-detr-base.pth
 tmp
 PPE_Detection/data_analysis/data_dashboard.ipynb
 PPE_Detection/inference/ZED
+*.png
