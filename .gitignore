@@ -1,0 +1,22 @@
+PPE_Detection/*.jpg
+*.zip
+*.pyc
+result/
+PPE_Detection/data_analysis/data_dashboard.ipynb
+*.exe 
+*.whl
+PPE_Detection/image/
+PPE_Detection/img_embeddings.txt
+__pycache__/
+PPE_Detection/rare_classes
+PPE_Detection/RF-DETR_data
+*.mp4
+PPE_Detection/experiments/PPE_detection_data_version 1/detect/yolo/train_rf_detr_base/RF-DETR.pth
+./PPE_Detection/experiments/PPE_detection_data_version 1/detect/yolo/train_rf_detr_base/RF-DETR.pth
+*.txt
+PPE_Detection/experiments/checkpoints/RF-DETR.pth
+PPE_Detection/inference/rf-detr-base.pth 
+tmp
+PPE_Detection/data_analysis/data_dashboard.ipynb
+PPE_Detection/inference/ZED
+*.png

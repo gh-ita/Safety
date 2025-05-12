@@ -1,0 +1,16 @@
+artifact_uri: file:///c:/Users/ghita/OneDrive/Bureau/PFE/Safety/PPE_Detection/data_analysis/../experiments/mlruns/648977364140002905/390bfc8a9396465ab7f81f914bf1350c/artifacts
+deleted_time: 1746680032556
+end_time: null
+entry_point_name: ''
+experiment_id: '648977364140002905'
+lifecycle_stage: deleted
+run_id: 390bfc8a9396465ab7f81f914bf1350c
+run_name: overjoyed-slug-911
+run_uuid: 390bfc8a9396465ab7f81f914bf1350c
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1746634346570
+status: 1
+tags: []
+user_id: zeus

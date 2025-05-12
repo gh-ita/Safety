@@ -1,0 +1,16 @@
+artifact_uri: file:///c:/Users/ghita/OneDrive/Bureau/PFE/Safety/PPE_Detection/data_analysis/../experiments/mlruns/148716760891896825/de3b5ec140b544beab2ffd5cfc04e8f2/artifacts
+deleted_time: 1746520878931
+end_time: 1746180094134
+entry_point_name: ''
+experiment_id: '148716760891896825'
+lifecycle_stage: deleted
+run_id: de3b5ec140b544beab2ffd5cfc04e8f2
+run_name: data_dashboard_5
+run_uuid: de3b5ec140b544beab2ffd5cfc04e8f2
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1746180091965
+status: 3
+tags: []
+user_id: ghita

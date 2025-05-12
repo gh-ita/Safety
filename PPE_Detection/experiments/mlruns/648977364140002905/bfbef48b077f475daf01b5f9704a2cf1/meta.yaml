@@ -1,0 +1,15 @@
+artifact_uri: file:///c:/Users/ghita/OneDrive/Bureau/PFE/Safety/PPE_Detection/data_analysis/../experiments/mlruns/648977364140002905/bfbef48b077f475daf01b5f9704a2cf1/artifacts
+end_time: 1746634303038
+entry_point_name: ''
+experiment_id: '648977364140002905'
+lifecycle_stage: active
+run_id: bfbef48b077f475daf01b5f9704a2cf1
+run_name: train_yolo10n
+run_uuid: bfbef48b077f475daf01b5f9704a2cf1
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1746630144288
+status: 3
+tags: []
+user_id: zeus

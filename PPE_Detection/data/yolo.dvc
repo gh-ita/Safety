@@ -1,0 +1,6 @@
+outs:
+- md5: 5ef7854b4599507b8d773702e96700b8.dir
+  size: 113008613
+  nfiles: 1465
+  hash: md5
+  path: yolo

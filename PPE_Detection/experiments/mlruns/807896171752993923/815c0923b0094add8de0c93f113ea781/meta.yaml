@@ -1,0 +1,15 @@
+artifact_uri: file:C:/Users/ghita/OneDrive/Bureau/PFE/Safety/PPE_Detection/experiments/mlruns/807896171752993923/815c0923b0094add8de0c93f113ea781/artifacts
+end_time: 1745246713191
+entry_point_name: ''
+experiment_id: '807896171752993923'
+lifecycle_stage: active
+run_id: 815c0923b0094add8de0c93f113ea781
+run_name: train_rf_detr_base
+run_uuid: 815c0923b0094add8de0c93f113ea781
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1745246710352
+status: 3
+tags: []
+user_id: ghita

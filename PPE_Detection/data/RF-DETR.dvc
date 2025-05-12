@@ -1,0 +1,6 @@
+outs:
+- md5: 74b8a4f6961c813503b0c5affc1b782b.dir
+  size: 114401117
+  nfiles: 734
+  hash: md5
+  path: RF-DETR
