@@ -8,9 +8,9 @@ import random
 import shutil
 from pathlib import Path
 
-LBL_DIR_PATH = "../data/merged_data/labels"
+LBL_DIR_PATH = "../data/merged_data/augmented_data_2/labels"
 SORTED_LBL_LIST = sorted(os.listdir(LBL_DIR_PATH))
-IMG_DIR_PATH = "../data/merged_data/images"
+IMG_DIR_PATH = "../data/merged_data/augmented_data_2/images"
 SORTED_IMG_LIST = sorted(os.listdir(IMG_DIR_PATH))
 
 def get_proxy_lbl(sorted_lbl_list, 
@@ -70,41 +70,6 @@ def filter_rare_classes(images,
         shutil.copy(os.path.join(labels_dir, lbl_name), os.path.join(valid_lbl_dir, lbl_name))
     return valid_images, valid_labels, valid_proxy_labels
 
-def stratified_test_split(
-    images_dir,
-    labels_dir,
-    image_files,
-    label_files,
-    proxy_labels, 
-    test_ratio=0.2,
-    output_dir="splits",
-    seed=42
-):
-    sss = StratifiedShuffleSplit(n_splits=1, test_size=test_ratio, random_state=seed)
-    indices = list(range(len(image_files)))
-    for train_idx, test_idx in sss.split(indices, proxy_labels):
-        train_imgs = [image_files[i] for i in train_idx]
-        train_lbls = [label_files[i] for i in train_idx]
-        test_imgs = [image_files[i] for i in test_idx]
-        test_lbls = [label_files[i] for i in test_idx]
-
-    test_img_dir = os.path.join(output_dir, "test/images")
-    test_lbl_dir = os.path.join(output_dir, "test/labels")
-    base_img_dir = os.path.join(output_dir, "kfold_base/images")
-    base_lbl_dir = os.path.join(output_dir, "kfold_base/labels")
-    for d in [test_img_dir, test_lbl_dir, base_img_dir, base_lbl_dir]:
-        os.makedirs(d, exist_ok=True)
-
-    for img, lbl in zip(test_imgs, test_lbls):
-        shutil.copy(os.path.join(images_dir, img), os.path.join(test_img_dir, img))
-        shutil.copy(os.path.join(labels_dir, lbl), os.path.join(test_lbl_dir, lbl))
-    
-    for img, lbl in zip(train_imgs, train_lbls):
-        shutil.copy(os.path.join(images_dir, img), os.path.join(base_img_dir, img))
-        shutil.copy(os.path.join(labels_dir, lbl), os.path.join(base_lbl_dir, lbl))
-
-    print(f"Test split complete: {len(test_imgs)} test samples, {len(train_imgs)} for k-fold.")
-    return True
     
 def generate_folds(n_splits,
                    sorted_img_list,
@@ -141,8 +106,6 @@ def generate_folds(n_splits,
                 shutil.copyfile(src_lbl, dst_lbl)
 
         print("Train:", len(train_idx), "Validation:", len(val_idx), "copied successfully.")
-
-
 
 
 def split_yolo_dataset(
@@ -195,62 +158,78 @@ def split_yolo_dataset(
 
     print(f"✅ Split complete! Total: {total} -> Train: {len(splits['train'])}, Val: {len(splits['val'])}, Test: {len(splits['test'])}")
 
-def select_class_data(clss_id, 
-                      img_folder,
-                      lbl_folder):
+
+def select_class_data(clss_id_list, img_folder, lbl_folder):
     clss_img_list = []
     clss_lbl_list = []
+    clss_id_set = set(clss_id_list)
+    
     img_list = sorted(os.listdir(img_folder))
     lbl_list = sorted(os.listdir(lbl_folder))
-    for index, lbl_file in enumerate(lbl_list) :
-        lbl_path = os.path.join(lbl_folder, lbl_file)
-        with open(lbl_path, "r") as lbls :
-            for line in lbls :
-                clss = line.split()[0]
-                if int(clss) == clss_id :
-                    clss_img_list.append(img_list[index])
-                    clss_lbl_list.append(lbl_file)
-                    break
-                    
-    return clss_img_list, clss_lbl_list 
-
-def remove_annot(clss_id, lbl_folder):
     
+    for index, lbl_file in enumerate(lbl_list):
+        lbl_path = os.path.join(lbl_folder, lbl_file)
+        with open(lbl_path, "r") as lbls:
+            for line in lbls:
+                if not line :
+                    continue
+                try:
+                    clss = int(line.split()[0])
+                    if clss in clss_id_set:
+                        clss_img_list.append(img_list[index])
+                        clss_lbl_list.append(lbl_file)
+                        break 
+                except (ValueError, IndexError):
+                    continue 
+    return clss_img_list, clss_lbl_list
+
+
+def remove_annot(clss_id_list, lbl_folder):
+    clss_id_set = set(clss_id_list)  
     lbl_list = os.listdir(lbl_folder)
-    for lbl_file in lbl_list :
+
+    for lbl_file in lbl_list:
         file_new_lbl = []
         lbl_path = os.path.join(lbl_folder, lbl_file)
-        with open(lbl_path , "r") as lbls :
-            for line in lbls :
-                clss = int(line.split()[0])
-                if clss == clss_id :
-                    file_new_lbl.append(line)
-        print(file_new_lbl)       
+        
+        with open(lbl_path, "r") as lbls:
+            for line in lbls:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    clss = int(line.split()[0])
+                    if clss not in clss_id_set:
+                        file_new_lbl.append(line + "\n")
+                except (ValueError, IndexError):
+                    continue
+        
         with open(lbl_path, "w") as lbls:
-            lbls.writelines(file_new_lbl)                                      
+            lbls.writelines(file_new_lbl)                                  
     
     
     
 if __name__ == "__main__":
-    #4
-    dest_img_folder = "../data/merged_data/no-goggles/images"
-    dest_lbl_folder = "../data/merged_data/no-goggles/labels"
+    #negatives [4,5,6,7,8,9]
+    #positives [0,1,2,3,9,10]
+    dest_img_folder = "../data/merged_data/augmented_data_2/p_clss/images"
+    dest_lbl_folder = "../data/merged_data/augmented_data_2/n_clss/labels"
+    #n
+    remove_annot([0,1,2,3,10], dest_lbl_folder)
     
-    img_list, lbl_list = select_class_data(5, IMG_DIR_PATH, LBL_DIR_PATH)
+    """
+    img_list, lbl_list = select_class_data([0,1,2,3,9,10], IMG_DIR_PATH, LBL_DIR_PATH)
     
     for lbl in lbl_list :
         src_lbl_path = os.path.join(LBL_DIR_PATH, lbl)
         dest_lbl_path = os.path.join(dest_lbl_folder, lbl)
         shutil.copy2(src_lbl_path, dest_lbl_path)
     
-    #split_yolo_dataset(base_path="../data/augmentation_data/mask/")
-    
-    """
     for img in img_list :
         src_img_path = os.path.join(IMG_DIR_PATH, img)
         dest_img_path = os.path.join(dest_img_folder, img)
-        shutil.copy2(src_img_path, dest_img_path)
-    """  
+        shutil.copy2(src_img_path, dest_img_path)"""
+
     
     """
     #split_yolo_dataset("../Construction-Site-Safety/data")

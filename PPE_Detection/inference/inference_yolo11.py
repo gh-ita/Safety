@@ -2,11 +2,11 @@ import cv2
 from ultralytics import YOLO
 import supervision as sv
 
-model = YOLO("../experiments/checkpoints/yolon11TLAllClss.pt")
+model = YOLO("../experiments/checkpoints/yolo10n_p_only.pt")
 
 # Input and output paths
-input_path = "../test_videos/goggle_video.mp4"
-output_path = "annotated_goggle_output_yolo11n_all_clss.mp4"
+input_path = "../test/samples/goggle_video.mp4"
+output_path = "../test/result/annotated_goggles_output_yolo10n_p_only.mp4"
 
 # Open input video
 cap = cv2.VideoCapture(input_path)

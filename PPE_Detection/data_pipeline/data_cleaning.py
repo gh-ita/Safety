@@ -20,8 +20,13 @@ IMAGE_FOLDER = "../data/augmentation data/images"
 LABEL_FOLDER = "../data/augmentation data/labels"
 #IMG_FILE_LIST = sorted(os.listdir(IMAGE_FOLDER))
 #LBL_FILE_LIST = sorted(os.listdir(LABEL_FOLDER))
-label_map =  {1:"gloves", 2:"goggles",3:"helmet",4:"mask",5:"no-gloves", 6:"no-goggles",7:"no-helmet",8:"no-mask",9:"no-safety-vest",10:"person", 11:"safety-vest"}
-trgt_lbl_map = {"gloves":0, "goggles" : 1, "helmet" :2, "mask":3, "no-gloves" :4, "no-goggles": 5, "no-helmet":6, "no-mask":7, "no-safety-vest" :8, "person" : 9, "safety-vest" : 10}
+
+p_or_lbl_map = {0:"gloves", 1:"goggles", 2:"helmet", 3:"mask", 9:"person", 10:"safety-vest"}
+n_or_lbl_map = {4:"no-gloves", 5: "no-goggles", 6 : "no-helmet", 7:"no-mask", 8:"no-safety-vest", 9:"person"}
+
+p_lbl_map =  {"gloves":0, "goggles":1,"helmet" :2,"mask":3,"person":4, "safety-vest":5}
+n_lbl_map =  {"no-gloves":0, "no-goggles":1, "no-helmet":2, "no-mask":3, "no-safety-vest":4, "person":5}
+
 def empty_label_finder(label_folder_path):
     """
     The label folder and image folder must contain the same number of corresponding images and their label files
@@ -195,5 +200,8 @@ def fix_class_ids_in_labels(labels_dir):
                 
 
 if __name__ == "__main__":
-
-    fix_class_ids_in_labels("../data/merged_data/augmented_data_2/labels")
+    #n
+    lbl_folder_path = "../data/merged_data/augmented_data_2/n_clss/labels"
+    lbl_list = os.listdir(lbl_folder_path)
+    remap_data(or_lbl_map = n_or_lbl_map, trgt_lbl_map = n_lbl_map, 
+               lbl_folder = lbl_folder_path, lbl_list = lbl_list)

@@ -2,3 +2,6 @@
 /RF-DETR
 /images
 /labels
+/augmentation_data
+/data
+/merged_data
