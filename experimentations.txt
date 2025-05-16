@@ -1,3 +1,0 @@
-RF DETR :
-early stopping after no improvements in 10 epochs, it stopped at the 41 epoch 
-training time 2:54:54
