@@ -13,6 +13,7 @@ from time import sleep
 import ogl_viewer.viewer as gl
 import cv_viewer.tracking_viewer as cv_viewer
 
+
 lock = Lock()
 run_signal = False
 exit_signal = False
@@ -96,11 +97,13 @@ def main():
         input_type.set_from_svo_file(opt.svo)
 
     # Create a InitParameters object and set configuration parameters
+    #######
     init_params = sl.InitParameters(input_t=input_type, svo_real_time_mode=True)
     init_params.coordinate_units = sl.UNIT.METER
-    init_params.depth_mode = sl.DEPTH_MODE.ULTRA  # QUALITY
+    init_params.depth_mode = sl.DEPTH_MODE.ULTRA
     init_params.coordinate_system = sl.COORDINATE_SYSTEM.RIGHT_HANDED_Y_UP
     init_params.depth_maximum_distance = 50
+    #######
 
     runtime_params = sl.RuntimeParameters()
     status = zed.open(init_params)
@@ -121,15 +124,16 @@ def main():
     obj_param = sl.ObjectDetectionParameters()
     obj_param.detection_model = sl.OBJECT_DETECTION_MODEL.CUSTOM_BOX_OBJECTS
     obj_param.enable_tracking = True
-    obj_param.enable_segmentation = False  # designed to give person pixel mask with internal OD
-    zed.enable_object_detection(obj_param)
+    obj_param.enable_segmentation = True #ned to give person pixel mask with internal OD
+    zed.enable_object_detection(obj_param) 
 
     objects = sl.Objects()
     obj_runtime_param = sl.ObjectDetectionRuntimeParameters()
 
     # Display
-    camera_infos = zed.get_camera_information()
-    camera_res = camera_infos.camera_configuration.resolution
+    camera_infos = zed.get_camera_information() 
+    camera_res = camera_infos.camera_configuration.resolution 
+    
     # Create OpenGL viewer
     viewer = gl.GLViewer()
     point_cloud_res = sl.Resolution(min(camera_res.width, 720), min(camera_res.height, 404))
@@ -137,6 +141,7 @@ def main():
     viewer.init(camera_infos.camera_model, point_cloud_res, obj_param.enable_tracking)
     point_cloud = sl.Mat(point_cloud_res.width, point_cloud_res.height, sl.MAT_TYPE.F32_C4, sl.MEM.CPU)
     image_left = sl.Mat()
+
     # Utilities for 2D display
     display_resolution = sl.Resolution(min(camera_res.width, 1280), min(camera_res.height, 720))
     image_scale = [display_resolution.width / camera_res.width, display_resolution.height / camera_res.height]
