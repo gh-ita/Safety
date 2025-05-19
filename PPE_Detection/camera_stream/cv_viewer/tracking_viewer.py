@@ -12,6 +12,7 @@ from collections import deque
 # ----------------------------------------------------------------------
 
 
+
 def cvt(pt, scale):
     """
     Function that scales point coordinates

@@ -140,9 +140,6 @@ class YoloTRT:
         if iou_thresh is None:
             iou_thresh = self.iou_thresh
             
-        # Process the outputs based on your TensorRT model format
-        # This is a simplified example and might need adaptation for your specific model
-        
         # For YOLOv8, assuming outputs is a list where the first item contains detection results
         # Format: [x, y, w, h, conf, cls1, cls2, ...]
         boxes = []
@@ -151,7 +148,7 @@ class YoloTRT:
         
         # Process detection outputs
         for i, det in enumerate(outputs[0]):  # Assuming first output is detection
-            if det[4] > conf_thresh:  # Filter by confidence
+            if det[4] > conf_thresh :  # Filter by confidence
                 x, y, w, h = det[0:4]
                 score = det[4]
                 class_id = np.argmax(det[5:])
@@ -194,6 +191,7 @@ class YoloTRT:
         for i, output_name in enumerate(self.output_names):
             # Get output shape
             shape = self.output_shapes[i]
+            print(shape)
             output = np.empty(shape, dtype=np.float32)
             cuda.memcpy_dtoh(output, self.binding_addrs[output_name])
             outputs.append(output)
