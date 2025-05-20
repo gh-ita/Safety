@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ZED Camera Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>ZED Camera Dashboard</h1>
+        <img id="video-feed" style="width: 100%; max-width: 1280px;">
+    </div>
+
+    <script>
+        const socket = io();
+        const videoFeed = document.getElementById('video-feed');
+        
+        socket.on('video_frame', function(data) {
+            videoFeed.src = 'data:image/jpeg;base64,' + data.frame;
+        });
+    </script>
+</body>
+</html>

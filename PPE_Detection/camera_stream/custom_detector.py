@@ -136,7 +136,7 @@ def main():
     obj_param = sl.ObjectDetectionParameters()
     obj_param.detection_model = sl.OBJECT_DETECTION_MODEL.CUSTOM_BOX_OBJECTS
     obj_param.enable_tracking = True
-    obj_param.enable_segmentation = True #ned to give person pixel mask with internal OD
+    obj_param.enable_segmentation = False #ned to give person pixel mask with internal OD
     zed.enable_object_detection(obj_param) 
 
     objects = sl.Objects()
@@ -196,13 +196,13 @@ def main():
             zed.get_position(cam_w_pose, sl.REFERENCE_FRAME.WORLD)
 
             # 3D rendering
-            viewer.updateData(point_cloud_render, objects)
+            #viewer.updateData(point_cloud_render, objects)
             # 2D rendering
             np.copyto(image_left_ocv, image_left.get_data())
             cv_viewer.render_2D(image_left_ocv, image_scale, objects, obj_param.enable_tracking)
             global_image = cv2.hconcat([image_left_ocv, image_track_ocv])
             # Tracking view
-            track_view_generator.generate_view(objects, cam_w_pose, image_track_ocv, objects.is_tracked)
+            #track_view_generator.generate_view(objects, cam_w_pose, image_track_ocv, objects.is_tracked)
 
             cv2.imshow("ZED | 2D View and Birds View", global_image)
             key = cv2.waitKey(10)
