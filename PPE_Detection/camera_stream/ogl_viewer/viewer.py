@@ -10,8 +10,8 @@ import numpy as np
 import array
 from enum import IntEnum
 
-from cv_viewer.utils import *
-import ogl_viewer.zed_model as zm
+from PPE_Detection.camera_stream.cv_viewer.utils import *
+import PPE_Detection.camera_stream.ogl_viewer.zed_model as zm
 import pyzed.sl as sl
 
 VERTEX_SHADER = """

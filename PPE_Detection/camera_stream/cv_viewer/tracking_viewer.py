@@ -1,7 +1,7 @@
 import cv2
 import numpy as np
 
-from cv_viewer.utils import *
+from PPE_Detection.camera_stream.cv_viewer.utils import *
 import pyzed.sl as sl
 import math
 from collections import deque
