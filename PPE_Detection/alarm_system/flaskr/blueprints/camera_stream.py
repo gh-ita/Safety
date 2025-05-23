@@ -9,7 +9,6 @@ import PPE_Detection.shared_state as shared_state
 
 
 streaming_bp = Blueprint('streaming', __name__)
-socketio = None
 
 @streaming_bp.route('/streaming')
 def stream_page():
@@ -20,7 +19,7 @@ def send_frame(frame):
     _, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
     frame_bytes = base64.b64encode(buffer).decode('utf-8')
     print("Emitting frame...") 
-    socketio.emit('video_frame', {'frame': frame_bytes})
+    emit('video_frame', {'frame': frame_bytes})
 
 # Thread to capture and process frames
 def video_feed():
@@ -37,10 +36,7 @@ def video_feed():
 
 def init_streaming(app):
     """Initialize streaming functionality with the app"""
-    global socketio
-    socketio = SocketIO(app, cors_allowed_origins="*",async_mode='eventlet', logger=True, engineio_logger=True)
     # Start camera thread
     thread = threading.Thread(target=video_feed)
     thread.daemon = True
     thread.start()
-    return socketio

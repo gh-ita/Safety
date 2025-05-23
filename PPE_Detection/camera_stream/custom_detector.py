@@ -93,7 +93,7 @@ def torch_thread(weights, img_size, conf_thres=0.2, iou_thres=0.45):
 
             # Store frame + detection once every second
             current_time = time.time()
-            if current_time - last_saved_time >= 1.0:
+            if current_time - last_saved_time >= 5.0:
                 timestamp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(current_time))
                 push_to_queue(timestamp=timestamp, frame=img_copy, det_cls=det.cls, det_cnf = det.conf, det_xywh = det.xywh)
                 last_saved_time = current_time

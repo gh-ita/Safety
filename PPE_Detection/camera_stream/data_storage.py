@@ -19,42 +19,31 @@ def deserialize_image(frame_bytes):
     _, buffer = cv2.imencode('.jpg', frame_bytes)
     return base64.b64encode(buffer).decode('utf-8')
 
-def dump_from_redis_to_mongo():
-    length = r.llen("detection_queue")
-    print(f"Found {length} items in Redis queue")
+def dump_from_redis_to_mongo(timestamp, frame, det_cls, det_cnf, det_xywh ):
+    try:
+        # Convert detections to serializable list of dicts
+        detection_list = []
+        for i in range(det_cls.shape[0]):
+            bbox = det_xywh[i].tolist()
+            conf = float(det_cnf[i])
+            cls_id = int(det_cls[i])
 
-    for i in range(length):
-        payload = r.lpop("detection_queue")
-        if not payload:
-            continue
+            detection_list.append({
+                "class_id": cls_id,
+                "confidence": conf,
+                "bbox": bbox
+            })
 
-        try:
-            timestamp, frame, det_cls, det_cnf, det_xywh = pickle.loads(payload)
-            print(f"Dumping timestamp: {timestamp}")
+        document = {
+            "timestamp": timestamp,
+            "frame": deserialize_image(frame),  # store as base64 string
+            "detections": detection_list
+        }
 
-            # Convert detections to serializable list of dicts
-            detection_list = []
-            for i in range(det_cls.shape[0]):
-                bbox = det_xywh[i].tolist()
-                conf = float(det_cnf[i])
-                cls_id = int(det_cls[i])
+        collection.insert_one(document)
 
-                detection_list.append({
-                    "class_id": cls_id,
-                    "confidence": conf,
-                    "bbox": bbox
-                })
-
-            document = {
-                "timestamp": timestamp,
-                "frame": deserialize_image(frame),  # store as base64 string
-                "detections": detection_list
-            }
-
-            collection.insert_one(document)
-
-        except Exception as e:
-            print(f"Error processing payload: {e}")
+    except Exception as e:
+        print(f"Error processing payload: {e}")
 
 if __name__ == "__main__":
     dump_from_redis_to_mongo()
