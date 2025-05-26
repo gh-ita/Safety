@@ -8,6 +8,7 @@ from PPE_Detection.alarm_system.flaskr import create_app
 
 
 
+
 def run_flask():
     app = create_app()
     socketio = app.socketio

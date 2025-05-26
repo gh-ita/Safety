@@ -5,7 +5,7 @@ import base64
 import threading
 import time
 import PPE_Detection.shared_state as shared_state
-
+from PPE_Detection.alarm_system.flaskr.sockets.socketio_setup import socketio
 
 
 streaming_bp = Blueprint('streaming', __name__)
@@ -19,7 +19,7 @@ def send_frame(frame):
     _, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
     frame_bytes = base64.b64encode(buffer).decode('utf-8')
     print("Emitting frame...") 
-    emit('video_frame', {'frame': frame_bytes})
+    socketio.emit('video_frame', {'frame': frame_bytes})
 
 # Thread to capture and process frames
 def video_feed():

@@ -1,10 +1,11 @@
 import pickle
 from PPE_Detection.camera_stream.redis_queue import r  # The redis.Redis instance you use
-from flaskr import rq
 from PPE_Detection.camera_stream.data_storage import dump_from_redis_to_mongo
-from sockets.socketio_setup import socketio
+from PPE_Detection.alarm_system.flaskr.sockets.socketio_setup import socketio
+import cv2
+import base64
 
-socketio = None 
+
 #input 
 class_risk ={
     4: 0.6,
@@ -16,7 +17,6 @@ class_risk ={
 
 confidence_threshold = 0.3
 
-@rq.job
 def process_detection_queue():
     print("Starting to process detection queue...")
     processed_count = 0
@@ -27,6 +27,8 @@ def process_detection_queue():
             break  
 
         timestamp, frame, det_cls, det_cnf, det_xywh = pickle.loads(payload)
+        _, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
+        frame_bytes = base64.b64encode(buffer).decode('utf-8')
         dump_from_redis_to_mongo(timestamp, frame, det_cls, det_cnf, det_xywh)
  
         print(f"[{timestamp}] Processing frame with {len(det_cls)} detections.")
@@ -52,9 +54,10 @@ def process_detection_queue():
         else:
             severity_index = "High"
             #send the frame to the dashboard via a websocket 
-            socketio.emit('frame_severity', {'timestamp': timestamp, 'frame':frame, 'severity': severity_index, "class_counts": class_counts})
+            print("[SOCKET] Emitting high_severity_alert")
+            socketio.emit('high_severity_alert', {'timestamp': timestamp, 'frame':frame_bytes, 'severity': severity_index, "class_counts": class_counts})
         
-        payload = pickle.dumps((timestamp, frame, severity_index, class_counts))
+        payload = pickle.dumps((timestamp, frame_bytes, severity_index, class_counts))
         r.lpush('history_queue', payload)
         print(f"Number of people detected: {num_people}")
         print(f"Frame Severity: {frame_severity_normalized:.2f} ({severity_index})")

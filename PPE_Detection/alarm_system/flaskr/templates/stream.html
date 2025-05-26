@@ -1,32 +1,289 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>ZED Camera Dashboard</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ZED Camera Dashboard</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Lucide Icons CDN -->
+  <script type="module">
+    import { createIcons, icons } from 'https://cdn.jsdelivr.net/npm/lucide@latest/+esm'
+    createIcons({ icons })
+  </script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
 </head>
-<body>
-    <div class="container">
-        <h1>ZED Camera Dashboard</h1>
-        <img id="video-feed" style="width: 100%; max-width: 1280px;">
+<body class="bg-gray-100 text-gray-800 font-sans">
+  <div class="min-h-screen p-4 max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow-md p-4 mb-6 flex justify-between items-center">
+      <h1 class="text-2xl font-bold flex items-center text-red-600">
+        <i data-lucide="alert-triangle" class="mr-2"></i>
+        PPE Safety Monitoring System
+      </h1>
+      <div class="flex items-center text-gray-600">
+        <i data-lucide="clock" class="mr-2" id="clock-icon"></i>
+        <span class="text-lg font-mono" id="clock"></span>
+      </div>
     </div>
 
-    <script>
-        const socket = io();
+    <!-- Main Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Live Camera Feed -->
+      <div class="lg:col-span-3 bg-white rounded-lg shadow-md p-4">
+        <h2 class="text-xl font-semibold mb-4 flex items-center">
+          <i data-lucide="camera" class="mr-2"></i>
+          Live Camera Feed - Zone A
+        </h2>
+        <div class="relative">
+          <img 
+            id="video-feed" 
+            src="" 
+            alt="Live feed"
+            class="w-full rounded-lg border-2 border-gray-300"
+          />
+          <!-- Dynamic violation overlays -->
+          <div id="violation-overlays" class="absolute top-4 left-4 space-y-2">
+            <!-- Overlays will be dynamically added here -->
+          </div>
+          <!--
+          <div class="absolute bottom-4 right-4 bg-black bg-opacity-50 text-white px-3 py-2 rounded text-sm">
+            <div>People in Area: <span id="people-count">0</span></div>
+            <div>PPE Violations: <span id="violation-count">0</span></div>
+          </div>
+          -->
+        </div>
+      </div>
+    </div>
 
-        socket.on('connect', () => {
-        console.log('Connected to server');
+    <!-- High Severity Alerts Panel -->
+    <div id="alert-panel" class="mt-6 space-y-2"></div>
+
+    <!-- Detection History -->
+    <div class="mt-8 bg-white rounded-lg shadow-md p-4">
+      <h3 class="text-lg font-semibold mb-4">Recent Detection History</h3>
+      <div id="history-container" class="space-y-4"></div>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="mt-6 bg-white rounded-lg shadow-md p-4 flex justify-between items-center">
+      <div class="flex items-center space-x-4">
+        <div class="flex items-center">
+          <div id="system-status" class="w-3 h-3 bg-gray-500 rounded-full mr-2"></div>
+          <span class="text-sm" id="system-status-text">System Connecting...</span>
+        </div>
+        <div class="flex items-center">
+          <div id="camera-status" class="w-3 h-3 bg-gray-500 rounded-full mr-2"></div>
+          <span class="text-sm" id="camera-status-text">Camera Connecting...</span>
+        </div>
+        <div class="flex items-center">
+          <div id="alert-status" class="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
+          <span class="text-sm" id="alert-status-text">0 Active Alerts</span>
+        </div>
+      </div>
+      <div class="text-sm text-gray-600">
+        Last Updated: <span id="last-updated">Never</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  const socket = io();
+  const videoFeed = document.getElementById('video-feed');
+  const lastUpdated = document.getElementById('last-updated');
+  const clock = document.getElementById('clock');
+  const alertPanel = document.getElementById('alert-panel');
+  const historyContainer = document.getElementById('history-container');
+  const violationOverlays = document.getElementById('violation-overlays');
+
+  // Elements to update dynamically
+  const peopleCountEl = document.getElementById('people-count');
+  const violationCountEl = document.getElementById('violation-count');
+  const severityBox = document.getElementById('severity-box');
+  const severityText = document.getElementById('severity-text');
+  const peopleSummary = document.getElementById('people-summary');
+  const missingPPE = document.getElementById('missing-ppe');
+  const compliantCount = document.getElementById('compliant-count');
+
+  // Status elements
+  const systemStatus = document.getElementById('system-status');
+  const systemStatusText = document.getElementById('system-status-text');
+  const cameraStatus = document.getElementById('camera-status');
+  const cameraStatusText = document.getElementById('camera-status-text');
+  const alertStatus = document.getElementById('alert-status');
+  const alertStatusText = document.getElementById('alert-status-text');
+
+  let activeAlerts = 0;
+
+  // Update clock every second
+  setInterval(() => {
+    const now = new Date();
+    clock.textContent = now.toLocaleTimeString();
+  }, 1000);
+
+  // Socket connection handlers
+  socket.on('connect', () => {
+    console.log('Connected to server');
+    systemStatus.className = 'w-3 h-3 bg-green-500 rounded-full mr-2';
+    systemStatusText.textContent = 'System Online';
+  });
+
+  socket.on('disconnect', () => {
+    console.log('Disconnected from server');
+    systemStatus.className = 'w-3 h-3 bg-red-500 rounded-full mr-2';
+    systemStatusText.textContent = 'System Offline';
+  });
+
+  // Handle video frames
+  socket.on('video_frame', function(data) {
+    videoFeed.src = 'data:image/jpeg;base64,' + data.frame;
+    cameraStatus.className = 'w-3 h-3 bg-green-500 rounded-full mr-2';
+    cameraStatusText.textContent = 'Camera Connected';
+    
+    const now = new Date();
+    lastUpdated.textContent = now.toLocaleTimeString();
+  });
+
+  // Handle regular frame data updates (for all frames)
+  socket.on('frame_data', function(data) {
+    const total = data.class_counts.total || 0;
+    const violations = data.class_counts.violations || 0;
+    const compliant = data.class_counts.compliant || 0;
+
+    // Update counters
+    peopleCountEl.textContent = total;
+    violationCountEl.textContent = violations;
+    peopleSummary.textContent = `Total People: ${total}`;
+    missingPPE.textContent = `Missing PPE: ${violations}`;
+    compliantCount.textContent = `Compliant: ${compliant}`;
+
+    // Update severity panel
+    const severity = data.severity.toLowerCase();
+    severityText.textContent = severity.toUpperCase();
+    
+    if (severity === 'low') {
+      severityBox.className = "bg-green-500 rounded-lg p-6 mb-4 text-white";
+    } else if (severity === 'medium') {
+      severityBox.className = "bg-yellow-500 rounded-lg p-6 mb-4 text-white";
+    } else if (severity === 'high') {
+      severityBox.className = "bg-red-500 rounded-lg p-6 mb-4 text-white";
+    }
+
+    // Update violation overlays
+    updateViolationOverlays(data.class_counts.details || {});
+
+    const now = new Date();
+    lastUpdated.textContent = now.toLocaleTimeString();
+  });
+
+  // Handle high severity alerts (only for alert panel)
+  socket.on('high_severity_alert', function(data) {
+    // Create high severity alert
+    const alert = document.createElement('div');
+    alert.className = "bg-red-600 text-white p-4 rounded shadow relative";
+    alert.innerHTML = `
+      <button class="absolute top-2 right-2 text-white hover:text-red-200" onclick="this.parentElement.remove(); updateAlertCount(-1);">
+        <i data-lucide="x" class="w-4 h-4"></i>
+      </button>
+      <strong>⚠️ HIGH RISK ALERT</strong><br/>
+      Time: ${new Date(data.timestamp).toLocaleTimeString()}<br/>
+      Severity: ${data.severity.toUpperCase()}<br/>
+      Violations: ${JSON.stringify(data.class_counts)}
+    `;
+    alertPanel.prepend(alert);
+    
+    // Re-create icons for the new alert
+    setTimeout(() => {
+      if (typeof createIcons === 'function') {
+        createIcons({ icons });
+      }
+    }, 100);
+
+    activeAlerts++;
+    updateAlertCount(0);
+
+    // Auto-remove alert after 30 seconds
+    setTimeout(() => {
+      if (alert.parentElement) {
+        alert.remove();
+        updateAlertCount(-1);
+      }
+    }, 30000);
+  });
+
+  function updateViolationOverlays(classDetails) {
+    violationOverlays.innerHTML = '';
+    
+    // Map of class IDs to violation types (adjust based on your class mappings)
+    const classNames = {
+            4:"No-Gloves",
+             5:"No-Goggles",
+             6:"No-Helmet",
+             7:"No-Mask",
+             8:"No-Safety_Vest",
+    };
+
+    Object.entries(classDetails).forEach(([classId, count]) => {
+      if (count > 0 && classNames[classId]) {
+        const overlay = document.createElement('div');
+        overlay.className = 'bg-red-500 text-white px-2 py-1 rounded text-sm font-semibold';
+        overlay.innerHTML = `🚫 ${classNames[classId]} (${count})`;
+        violationOverlays.appendChild(overlay);
+      }
+    });
+  }
+
+  function updateAlertCount(change) {
+    activeAlerts = Math.max(0, activeAlerts + change);
+    alertStatusText.textContent = `${activeAlerts} Active Alerts`;
+    
+    if (activeAlerts === 0) {
+      alertStatus.className = 'w-3 h-3 bg-green-500 rounded-full mr-2';
+    } else {
+      alertStatus.className = 'w-3 h-3 bg-yellow-500 rounded-full mr-2';
+    }
+  }
+
+  function loadHistory() {
+    fetch('/api/history')
+      .then(res => res.json())
+      .then(data => {
+        historyContainer.innerHTML = '';
+        data.slice(0, 10).forEach(entry => { 
+          const div = document.createElement('div');
+          div.className = 'bg-gray-50 rounded p-4 border border-gray-200 shadow';
+          div.innerHTML = `
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <div><strong>Time:</strong> ${new Date(entry.timestamp).toLocaleTimeString()}</div>
+                <div><strong>Severity:</strong> <span class="capitalize">${entry.severity}</span></div>
+                <div><strong>Violations:</strong> ${JSON.stringify(entry.class_counts)}</div>
+              </div>
+              <div class="md:col-span-2">
+                <img src="data:image/jpeg;base64,${entry.frame}" class="rounded border border-gray-300 max-w-full max-h-32 object-contain">
+              </div>
+            </div>
+          `;
+          historyContainer.appendChild(div);
         });
+      })
+      .catch(err => {
+        console.error('Failed to load history:', err);
+        historyContainer.innerHTML = '<div class="text-gray-500 text-center">Failed to load history</div>';
+      });
+  }
 
-        socket.on('disconnect', () => {
-        console.log('Disconnected from server');
-        });
+  // Load history every 10 seconds
+  setInterval(loadHistory, 10000);
+  loadHistory(); // Initial load
 
-        const videoFeed = document.getElementById('video-feed');
+  // Initialize clock
+  const now = new Date();
+  clock.textContent = now.toLocaleTimeString();
+</script>
 
-        socket.on('video_frame', function(data) {
-            console.log('Received frame');  // Debug log for receiving frames
-            videoFeed.src = 'data:image/jpeg;base64,' + data.frame;
-        });
-    </script>
 </body>
 </html>
