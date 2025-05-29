@@ -29,8 +29,9 @@ def process_detection_queue():
         timestamp, frame, det_cls, det_cnf, det_xywh = pickle.loads(payload)
         _, buffer = cv2.imencode('.jpg', frame, [cv2.IMWRITE_JPEG_QUALITY, 80])
         frame_bytes = base64.b64encode(buffer).decode('utf-8')
+        
         dump_from_redis_to_mongo(timestamp, frame, det_cls, det_cnf, det_xywh)
- 
+
         print(f"[{timestamp}] Processing frame with {len(det_cls)} detections.")
 
         num_people = 0
@@ -53,10 +54,11 @@ def process_detection_queue():
             severity_index = "Moderate"
         else:
             severity_index = "High"
-            #send the frame to the dashboard via a websocket 
-            print("[SOCKET] Emitting high_severity_alert")
-            socketio.emit('high_severity_alert', {'timestamp': timestamp, 'frame':frame_bytes, 'severity': severity_index, "class_counts": class_counts})
-        
+        socketio.emit('high_severity_alert', {
+            'timestamp': timestamp,
+            'severity': frame_severity_normalized,
+            'class_counts': class_counts
+        })
         payload = pickle.dumps((timestamp, frame_bytes, severity_index, class_counts))
         r.lpush('history_queue', payload)
         print(f"Number of people detected: {num_people}")
@@ -66,4 +68,4 @@ def process_detection_queue():
         processed_count += 1
 
     print(f"Finished processing {processed_count} items.")
-    
+

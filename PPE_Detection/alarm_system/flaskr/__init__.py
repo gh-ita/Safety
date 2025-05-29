@@ -1,5 +1,5 @@
 import eventlet
-eventlet.monkey_patch() 
+eventlet.monkey_patch()
 import os
 from flask import Flask
 from flask_rq2 import RQ
@@ -20,8 +20,6 @@ def create_app(test_config=None):
         SECRET_KEY='dev',
         DATABASE=os.path.join(app.instance_path, 'flaskr.sqlite'),
     )
-    
-
     
     if test_config is None:
         app.config.from_pyfile('config.py', silent=True)

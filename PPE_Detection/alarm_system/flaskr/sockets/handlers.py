@@ -10,5 +10,5 @@ def on_disconnect():
 
 @socketio.on('ping')
 def handle_ping(data):
-    print(f"Received ping with: {data}")
+    #print(f"Received ping with: {data}")
     socketio.emit('pong', {'message': 'pong from server'})

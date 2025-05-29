@@ -49,7 +49,7 @@
           <div id="violation-overlays" class="absolute top-4 left-4 space-y-2">
             <!-- Overlays will be dynamically added here -->
           </div>
-          <!--
+          <!-- 
           <div class="absolute bottom-4 right-4 bg-black bg-opacity-50 text-white px-3 py-2 rounded text-sm">
             <div>People in Area: <span id="people-count">0</span></div>
             <div>PPE Violations: <span id="violation-count">0</span></div>
@@ -211,7 +211,7 @@
         alert.remove();
         updateAlertCount(-1);
       }
-    }, 30000);
+    }, 60000);
   });
 
   function updateViolationOverlays(classDetails) {
@@ -248,32 +248,66 @@
   }
 
   function loadHistory() {
+        const classNames = {
+            4:"No-Gloves",
+             5:"No-Goggles",
+             6:"No-Helmet",
+             7:"No-Mask",
+             8:"No-Safety_Vest",
+    };
     fetch('/api/history')
-      .then(res => res.json())
-      .then(data => {
-        historyContainer.innerHTML = '';
-        data.slice(0, 10).forEach(entry => { 
-          const div = document.createElement('div');
-          div.className = 'bg-gray-50 rounded p-4 border border-gray-200 shadow';
-          div.innerHTML = `
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <div><strong>Time:</strong> ${new Date(entry.timestamp).toLocaleTimeString()}</div>
-                <div><strong>Severity:</strong> <span class="capitalize">${entry.severity}</span></div>
-                <div><strong>Violations:</strong> ${JSON.stringify(entry.class_counts)}</div>
-              </div>
-              <div class="md:col-span-2">
-                <img src="data:image/jpeg;base64,${entry.frame}" class="rounded border border-gray-300 max-w-full max-h-32 object-contain">
-              </div>
+  .then(res => res.json())
+  .then(data => {
+    historyContainer.innerHTML = '';
+    data.slice(0, 10).forEach(entry => { 
+      const div = document.createElement('div');
+      div.className = 'rounded p-4 border border-gray-200 shadow';
+
+      // Determine background color based on severity
+      let severityBgColorClass = '';
+      switch (entry.severity.toLowerCase()) {
+        case 'high':
+          severityBgColorClass = 'bg-red-100';
+          break;
+        case 'moderate':
+          severityBgColorClass = 'bg-orange-100';
+          break;
+        case 'low':
+          severityBgColorClass = 'bg-yellow-100';
+          break;
+        default:
+          severityBgColorClass = 'bg-gray-100';
+      }
+
+      div.classList.add(severityBgColorClass);
+
+      div.innerHTML = `
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <div><strong>Time:</strong> ${new Date(entry.timestamp).toLocaleTimeString()}</div>
+            <div><strong>Severity:</strong> <span class="capitalize">${entry.severity}</span></div>
+            <div><strong>Violations:</strong> 
+              ${
+                Object.entries(entry.class_counts)
+                  .map(([id, count]) => `${classNames[id] || id}: ${count}`)
+                  .join(', ')
+              }
             </div>
-          `;
-          historyContainer.appendChild(div);
-        });
-      })
-      .catch(err => {
-        console.error('Failed to load history:', err);
-        historyContainer.innerHTML = '<div class="text-gray-500 text-center">Failed to load history</div>';
-      });
+          </div>
+          <div class="md:col-span-2">
+            <img src="data:image/jpeg;base64,${entry.frame}" class="rounded border border-gray-300 max-w-full max-h-32 object-contain">
+          </div>
+        </div>
+      `;
+      historyContainer.appendChild(div);
+    });
+  })
+  .catch(err => {
+    console.error('Failed to load history:', err);
+    historyContainer.innerHTML = '<div class="text-gray-500 text-center">Failed to load history</div>';
+  });
+
+
   }
 
   // Load history every 10 seconds

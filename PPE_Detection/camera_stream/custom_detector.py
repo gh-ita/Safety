@@ -93,7 +93,7 @@ def torch_thread(weights, img_size, conf_thres=0.2, iou_thres=0.45):
 
             # Store frame + detection once every second
             current_time = time.time()
-            if current_time - last_saved_time >= 5.0:
+            if current_time - last_saved_time >= 3.0:
                 timestamp = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(current_time))
                 push_to_queue(timestamp=timestamp, frame=img_copy, det_cls=det.cls, det_cnf = det.conf, det_xywh = det.xywh)
                 last_saved_time = current_time
@@ -217,7 +217,7 @@ def main():
             # Tracking view
             #track_view_generator.generate_view(objects, cam_w_pose, image_track_ocv, objects.is_tracked)
             
-            #cv2.imshow("ZED | 2D View and Birds View", global_image)
+            cv2.imshow("ZED | 2D View and Birds View", shared_state.global_image)
             key = cv2.waitKey(10)
             if key == 27 or key == ord('q') or key == ord('Q'):
                 exit_signal = True
@@ -334,7 +334,7 @@ def start_camera(opt):
             #viewer.updateData(point_cloud_render, objects)
             # 2D rendering
             np.copyto(image_left_ocv, image_left.get_data())
-            #cv_viewer.render_2D(image_left_ocv, image_scale, objects, obj_param.enable_tracking)
+            cv_viewer.render_2D(image_left_ocv, image_scale, objects, obj_param.enable_tracking)
 
             with shared_state.lock:
                 shared_state.global_image = cv2.hconcat([image_left_ocv, image_track_ocv])
@@ -342,7 +342,7 @@ def start_camera(opt):
             # Tracking view
             #track_view_generator.generate_view(objects, cam_w_pose, image_track_ocv, objects.is_tracked)
             
-            #cv2.imshow("ZED | 2D View and Birds View", global_image)
+            cv2.imshow("ZED | 2D View and Birds View", shared_state.global_image)
             key = cv2.waitKey(10)
             if key == 27 or key == ord('q') or key == ord('Q'):
                 exit_signal = True
