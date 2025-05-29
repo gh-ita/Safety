@@ -7,6 +7,13 @@ from PPE_Detection.alarm_system.flaskr.sockets.socketio_setup import socketio
 from apscheduler.schedulers.background import BackgroundScheduler
 from PPE_Detection.alarm_system.flaskr.redis_jobs import jobs
 
+class_risk ={
+    4: 1,
+    5: 1,
+    6: 1,
+    7: 1,
+    8: 1,
+}
 rq = RQ()
 scheduler = BackgroundScheduler()
 rq.job(jobs.process_detection_queue)
@@ -30,9 +37,24 @@ def create_app(test_config=None):
     except OSError:
         pass
 
+    from .blueprints.camera_stream import streaming_bp, init_streaming
+    from .blueprints.history import history_bp
+    from .blueprints.risk_index import risk_idx_bp
+
+    app.register_blueprint(streaming_bp)
+    app.register_blueprint(history_bp)
+    app.register_blueprint(risk_idx_bp)
+
+    streaming = init_streaming(app)
+    socketio.init_app(app)
+
+    # Store socketio in app config so you can access it later if needed
+    app.socketio = socketio
+    app.scheduler = scheduler 
+
     def start_scheduler():
         if not scheduler.running:
-            scheduler.add_job(jobs.process_detection_queue, 'interval', seconds=5, id='process_detection_queue')
+            scheduler.add_job(jobs.process_detection_queue, 'interval', seconds=5, id='process_detection_queue', args=[class_risk, app.socketio])
             scheduler.start()
 
 
@@ -41,16 +63,6 @@ def create_app(test_config=None):
         if scheduler.running:
             scheduler.shutdown()
 
-    from .blueprints.camera_stream import streaming_bp, init_streaming
-    from .blueprints.history import history_bp
-    app.register_blueprint(streaming_bp)
-    app.register_blueprint(history_bp)
-
-    streaming = init_streaming(app)
-    socketio.init_app(app)
-
-    # Store socketio in app config so you can access it later if needed
-    app.socketio = socketio
     start_scheduler()
 
     return app

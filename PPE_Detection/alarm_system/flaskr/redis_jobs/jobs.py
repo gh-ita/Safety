@@ -6,18 +6,9 @@ import cv2
 import base64
 
 
-#input 
-class_risk ={
-    4: 0.6,
-    5: 0.7,
-    6: 0.8,
-    7: 0.8,
-    8: 0.5,
-}
-
 confidence_threshold = 0.3
 
-def process_detection_queue():
+def process_detection_queue(class_risk, socketio):
     print("Starting to process detection queue...")
     processed_count = 0
 
