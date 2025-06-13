@@ -1,506 +1,846 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ZED Camera Dashboard</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PPE Safety Monitoring Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <style>
+        /* A more modern, visually appealing design with gradients, modals, and responsive layouts. */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #2d3748;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 1.5rem 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 2rem;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex: 1;
+        }
+        
+        .header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .header-logo {
+            height: 50px;
+            width: auto;
+            object-fit: contain;
+        }
+        
+        .config-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+        }
+        
+        .config-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        /* Risk Configuration Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(5px);
+            animation: fadeIn 0.3s ease;
+        }
 
-  <!-- Tailwind CSS CDN -->
-  <script src="https://cdn.tailwindcss.com"></script>
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .modal-content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            margin: 5% auto;
+            padding: 2rem;
+            border-radius: 20px;
+            width: 80%;
+            max-width: 800px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+        }
+        
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(226, 232, 240, 0.5);
+        }
+        
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2d3748;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+        
+        .close:hover {
+            color: #667eea;
+        }
+        
+        .risk-config-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .risk-item {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 12px;
+            padding: 1.5rem;
+            border-left: 4px solid #667eea;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        .risk-label {
+            font-weight: 600;
+            color: #4a5568;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .risk-input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+            background: rgba(255, 255, 255, 0.9);
+        }
+        
+        .risk-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            align-items: center;
+        }
+        
+        .btn-secondary {
+            padding: 0.75rem 1.5rem;
+            background: #6b7280;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-secondary:hover {
+            background: #4b5563;
+            transform: translateY(-1px);
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .stat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+        
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        
+        .stat-icon.violations {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+            color: white;
+        }
+        
+        .stat-icon.critical {
+            background: linear-gradient(135deg, #ff4757, #c44569);
+            color: white;
+        }
+        
+        .stat-icon.compliant {
+            background: linear-gradient(135deg, #2ed573, #1e90ff);
+            color: white;
+        }
+        
+        .stat-icon.personnel {
+            background: linear-gradient(135deg, #3742fa, #2f3542);
+            color: white;
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #2d3748;
+            margin: 0.5rem 0;
+        }
+        
+        .stat-label {
+            color: #718096;
+            font-weight: 500;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 2rem;
+        }
+        
+        .video-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .video-header {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid rgba(226, 232, 240, 0.5);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(102, 126, 234, 0.1);
+        }
 
-  <!-- Lucide Icons CDN -->
-  <script type="module">
-    import { createIcons, icons } from 'https://cdn.jsdelivr.net/npm/lucide@latest/+esm'
-    createIcons({ icons })
-  </script>
+        .video-header h3 {
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+        
+        .video-feed-container {
+            width: 100%;
+            /* Keep padding-top for aspect ratio but ensure flex-grow makes it take available space */
+            padding-top: 56.25%; /* 16:9 Aspect Ratio */
+            background: #000;
+            position: relative;
+            aspect-ratio: 16 / 9;
+            flex-grow: 1; /* This makes it grow within the flex column of video-section */
+            display: flex; /* Make it a flex container */
+            align-items: center; /* Center content vertically */
+            justify-content: center; /* Center content horizontally */
+        }   
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+        .video-feed-container > * {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* Changed to cover the container */
+        }
+        #video-feed {
+            width: 100%;
+            height: 100%;
+            object-fit: cover; /* or `contain` if you want full view with black bars */
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: none; /* shown when stream loads */
+        }
+        #video-placeholder {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex; /* Inherit flex from parent */
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            text-align: center;
+            background-color: #000; /* Ensure placeholder background covers the space */
+        }
+        
+        .violation-overlays {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+            z-index: 10;
+        }
+        
+        .violation-overlay {
+            background: rgba(239, 68, 68, 0.9);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .violations-section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-height: 650px; /* Adjusted height */
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .violations-header {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid rgba(226, 232, 240, 0.5);
+            font-weight: 700;
+            font-size: 1.1rem;
+            background: rgba(102, 126, 234, 0.1);
+        }
+        
+        .violations-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+        
+        .violation-item {
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            border-left: 4px solid;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        .violation-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .violation-item.critical, .violation-item.high {
+            border-left-color: #dc2626;
+            background: rgba(254, 226, 226, 0.8);
+        }
+
+        .violation-item.medium {
+            border-left-color: #f59e0b;
+            background: rgba(255, 251, 235, 0.8);
+        }
+
+        .violation-item.low {
+            border-left-color: #16a34a;
+            background: rgba(240, 253, 244, 0.8);
+        }
+        
+        .violation-header-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 0.75rem;
+        }
+        
+        .violation-zone {
+            font-weight: 700;
+            font-size: 1rem;
+            color: #2d3748;
+        }
+        
+        .violation-severity {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: white;
+        }
+        
+        .severity-critical, .severity-high { background: linear-gradient(135deg, #dc2626, #b91c1c); }
+        .severity-medium { background: linear-gradient(135deg, #f59e0b, #d97706); }
+        .severity-low { background: linear-gradient(135deg, #16a34a, #15803d); }
+        
+        .violation-details {
+            color: #4a5568;
+            font-size: 0.9rem;
+            line-height: 1.4;
+        }
+        
+        .violation-timestamp {
+            color: #718096;
+            font-size: 0.8rem;
+            margin-top: 0.5rem;
+        }
+        
+        .missing-ppe-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            background: rgba(239, 68, 68, 0.1);
+            color: #dc2626;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin: 0.25rem 0.25rem 0 0;
+        }
+        
+        .connection-status {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 0.75rem 1rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            z-index: 1001;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            transition: background-color 0.3s ease;
+        }
+        
+        .ws-connected { color: #16a34a; }
+        .ws-disconnected { color: #dc2626; }
+        
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            .violations-section {
+                max-height: 400px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .container { padding: 1rem; }
+            .header-content { flex-direction: column; align-items: flex-start; }
+            .header h1 { font-size: 1.4rem; }
+            .header-logo { align-self: flex-end; height: 40px; }
+            .stats-grid { grid-template-columns: 1fr; }
+        }
+        
+        /* Custom scrollbar */
+        .violations-list::-webkit-scrollbar { width: 6px; }
+        .violations-list::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.1); border-radius: 3px; }
+        .violations-list::-webkit-scrollbar-thumb { background: rgba(102, 126, 234, 0.5); border-radius: 3px; }
+        .violations-list::-webkit-scrollbar-thumb:hover { background: rgba(102, 126, 234, 0.7); }
+    </style>
 </head>
-<body class="bg-gray-100 text-gray-800 font-sans">
-  <div class="min-h-screen p-4 max-w-7xl mx-auto">
-    <!-- Header -->
-    <div class="bg-white rounded-lg shadow-md p-4 mb-6 flex justify-between items-center">
-      <h1 class="text-2xl font-bold flex items-center text-red-600">
-        <i data-lucide="alert-triangle" class="mr-2"></i>
-        PPE Safety Monitoring System
-      </h1>
-      <div class="flex items-center text-gray-600">
-        <i data-lucide="clock" class="mr-2" id="clock-icon"></i>
-        <span class="text-lg font-mono" id="clock"></span>
-        <!-- Risk Configuration Button -->
-        <button 
-          id="config-btn"
-          class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center transition-colors mr-4"
-          onclick="toggleConfigPanel()"
-        >
-          <i data-lucide="settings" class="mr-2 w-4 h-4"></i>
-          Configure Risk Index
-        </button>
-      </div>
-    </div>
-    <!-- Risk Configuration Panel (Hidden by default) -->
-    <div id="config-panel" class="bg-white rounded-lg shadow-md p-6 mb-6 hidden">
-      <h2 class="text-xl font-semibold mb-4 flex items-center">
-        <i data-lucide="sliders" class="mr-2"></i>
-        Risk Index Configuration
-      </h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-        <div class="space-y-2">
-          <label for="risk-no-gloves" class="block text-sm font-medium text-gray-700">Gloves Risk</label>
-          <input 
-            type="number" 
-            id="risk-no-gloves" 
-            value="0.5" 
-            min="0" 
-            max="1" 
-            step="0.1"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-        </div>
-        <div class="space-y-2">
-          <label for="risk-no-goggles" class="block text-sm font-medium text-gray-700">Goggles Risk</label>
-          <input 
-            type="number" 
-            id="risk-no-goggles" 
-            value="0.5" 
-            min="0" 
-            max="1" 
-            step="0.1"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-        </div>
-        <div class="space-y-2">
-          <label for="risk-no-helmet" class="block text-sm font-medium text-gray-700">Helmet Risk</label>
-          <input 
-            type="number" 
-            id="risk-no-helmet" 
-            value="0.5" 
-            min="0" 
-            max="1" 
-            step="0.1"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-        </div>
-        <div class="space-y-2">
-          <label for="risk-no-mask" class="block text-sm font-medium text-gray-700">Mask Risk</label>
-          <input 
-            type="number" 
-            id="risk-no-mask" 
-            value="0.5" 
-            min="0" 
-            max="1" 
-            step="0.1"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-        </div>
-        <div class="space-y-2">
-          <label for="risk-no-safety-vest" class="block text-sm font-medium text-gray-700">No Safety Vest Risk</label>
-          <input 
-            type="number" 
-            id="risk-no-safety-vest" 
-            value="0.5" 
-            min="0" 
-            max="1" 
-            step="0.1"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-        </div>
-      </div>
-      <div class="flex space-x-3">
-        <button 
-          onclick="updateRiskIndex()" 
-          class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg flex items-center transition-colors"
-        >
-          <i data-lucide="check" class="mr-2 w-4 h-4"></i>
-          Update Risk Configuration
-        </button>
-        <button 
-          onclick="resetRiskIndex()" 
-          class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg flex items-center transition-colors"
-        >
-          <i data-lucide="rotate-ccw" class="mr-2 w-4 h-4"></i>
-          Reset to Defaults
-        </button>
-        <div id="config-status" class="flex items-center text-sm"></div>
-      </div>
-    </div>
-    <!-- Main Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- Live Camera Feed -->
-      <div class="lg:col-span-3 bg-white rounded-lg shadow-md p-4">
-        <h2 class="text-xl font-semibold mb-4 flex items-center">
-          <i data-lucide="camera" class="mr-2"></i>
-          Live Camera Feed - Zone A
-        </h2>
-        <div class="relative">
-          <img 
-            id="video-feed" 
-            src="" 
-            alt="Live feed"
-            class="w-full rounded-lg border-2 border-gray-300"
-          />
-          <!-- Dynamic violation overlays -->
-          <div id="violation-overlays" class="absolute top-4 left-4 space-y-2">
-            <!-- Overlays will be dynamically added here -->
-          </div>
-          <!-- 
-          <div class="absolute bottom-4 right-4 bg-black bg-opacity-50 text-white px-3 py-2 rounded text-sm">
-            <div>People in Area: <span id="people-count">0</span></div>
-            <div>PPE Violations: <span id="violation-count">0</span></div>
-          </div>
-          -->
-        </div>
-      </div>
-    </div>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="header-content">
+                <div class="header-left">
+                    <h1>🛡️ PPE Safety Monitoring System</h1>
+                </div>
+                <div class="header-controls">
+                    <button class="config-btn" onclick="openRiskConfig()">
+                        ⚙️ Configure Risk Index
+                    </button>
+                    <img src="{{ url_for('static', filename='um6p-dice.png') }}"
+                      alt="UM6P DICE Logo"
+                      class="header-logo"
+                      style="height: 40px; width: auto;">
 
-    <!-- High Severity Alerts Panel -->
-    <div id="alert-panel" class="mt-6 space-y-2"></div>
-
-    <!-- Detection History -->
-    <div class="mt-8 bg-white rounded-lg shadow-md p-4">
-      <h3 class="text-lg font-semibold mb-4">Recent Detection History</h3>
-      <div id="history-container" class="space-y-4"></div>
-    </div>
-
-    <!-- Status Bar -->
-    <div class="mt-6 bg-white rounded-lg shadow-md p-4 flex justify-between items-center">
-      <div class="flex items-center space-x-4">
-        <div class="flex items-center">
-          <div id="system-status" class="w-3 h-3 bg-gray-500 rounded-full mr-2"></div>
-          <span class="text-sm" id="system-status-text">System Connecting...</span>
-        </div>
-        <div class="flex items-center">
-          <div id="camera-status" class="w-3 h-3 bg-gray-500 rounded-full mr-2"></div>
-          <span class="text-sm" id="camera-status-text">Camera Connecting...</span>
-        </div>
-        <div class="flex items-center">
-          <div id="alert-status" class="w-3 h-3 bg-green-500 rounded-full mr-2"></div>
-          <span class="text-sm" id="alert-status-text">0 Active Alerts</span>
-        </div>
-      </div>
-      <div class="text-sm text-gray-600">
-        Last Updated: <span id="last-updated">Never</span>
-      </div>
-    </div>
-  </div>
-
-  <script>
-  const socket = io();
-  const videoFeed = document.getElementById('video-feed');
-  const lastUpdated = document.getElementById('last-updated');
-  const clock = document.getElementById('clock');
-  const alertPanel = document.getElementById('alert-panel');
-  const historyContainer = document.getElementById('history-container');
-  const violationOverlays = document.getElementById('violation-overlays');
-
-  // Elements to update dynamically
-  const peopleCountEl = document.getElementById('people-count');
-  const violationCountEl = document.getElementById('violation-count');
-  const severityBox = document.getElementById('severity-box');
-  const severityText = document.getElementById('severity-text');
-  const peopleSummary = document.getElementById('people-summary');
-  const missingPPE = document.getElementById('missing-ppe');
-  const compliantCount = document.getElementById('compliant-count');
-
-  // Status elements
-  const systemStatus = document.getElementById('system-status');
-  const systemStatusText = document.getElementById('system-status-text');
-  const cameraStatus = document.getElementById('camera-status');
-  const cameraStatusText = document.getElementById('camera-status-text');
-  const alertStatus = document.getElementById('alert-status');
-  const alertStatusText = document.getElementById('alert-status-text');
-
-  let activeAlerts = 0;
-
-  // Update clock every second
-  setInterval(() => {
-    const now = new Date();
-    clock.textContent = now.toLocaleTimeString();
-  }, 1000);
-
-  // Socket connection handlers
-  socket.on('connect', () => {
-    console.log('Connected to server');
-    systemStatus.className = 'w-3 h-3 bg-green-500 rounded-full mr-2';
-    systemStatusText.textContent = 'System Online';
-  });
-
-  socket.on('disconnect', () => {
-    console.log('Disconnected from server');
-    systemStatus.className = 'w-3 h-3 bg-red-500 rounded-full mr-2';
-    systemStatusText.textContent = 'System Offline';
-  });
-
-  // Handle video frames
-  socket.on('video_frame', function(data) {
-    videoFeed.src = 'data:image/jpeg;base64,' + data.frame;
-    cameraStatus.className = 'w-3 h-3 bg-green-500 rounded-full mr-2';
-    cameraStatusText.textContent = 'Camera Connected';
-    
-    const now = new Date();
-    lastUpdated.textContent = now.toLocaleTimeString();
-  });
-
-  // Handle regular frame data updates (for all frames)
-  socket.on('frame_data', function(data) {
-    const total = data.class_counts.total || 0;
-    const violations = data.class_counts.violations || 0;
-    const compliant = data.class_counts.compliant || 0;
-
-    // Update counters
-    peopleCountEl.textContent = total;
-    violationCountEl.textContent = violations;
-    peopleSummary.textContent = `Total People: ${total}`;
-    missingPPE.textContent = `Missing PPE: ${violations}`;
-    compliantCount.textContent = `Compliant: ${compliant}`;
-
-    // Update severity panel
-    const severity = data.severity.toLowerCase();
-    severityText.textContent = severity.toUpperCase();
-    
-    if (severity === 'low') {
-      severityBox.className = "bg-green-500 rounded-lg p-6 mb-4 text-white";
-    } else if (severity === 'medium') {
-      severityBox.className = "bg-yellow-500 rounded-lg p-6 mb-4 text-white";
-    } else if (severity === 'high') {
-      severityBox.className = "bg-red-500 rounded-lg p-6 mb-4 text-white";
-    }
-
-    // Update violation overlays
-    updateViolationOverlays(data.class_counts.details || {});
-
-    const now = new Date();
-    lastUpdated.textContent = now.toLocaleTimeString();
-  });
-
-  // Handle high severity alerts (only for alert panel)
-  socket.on('high_severity_alert', function(data) {
-    // Create high severity alert
-    const alert = document.createElement('div');
-    alert.className = "bg-red-600 text-white p-4 rounded shadow relative";
-    alert.innerHTML = `
-      <button class="absolute top-2 right-2 text-white hover:text-red-200" onclick="this.parentElement.remove(); updateAlertCount(-1);">
-        <i data-lucide="x" class="w-4 h-4"></i>
-      </button>
-      <strong>⚠️ HIGH RISK ALERT</strong><br/>
-      Time: ${new Date(data.timestamp).toLocaleTimeString()}<br/>
-      Severity: ${data.severity.toUpperCase()}<br/>
-      Violations: ${JSON.stringify(data.class_counts)}
-    `;
-    alertPanel.prepend(alert);
-    
-    // Re-create icons for the new alert
-    setTimeout(() => {
-      if (typeof createIcons === 'function') {
-        createIcons({ icons });
-      }
-    }, 100);
-
-    activeAlerts++;
-    updateAlertCount(0);
-
-    // Auto-remove alert after 30 seconds
-    setTimeout(() => {
-      if (alert.parentElement) {
-        alert.remove();
-        updateAlertCount(-1);
-      }
-    }, 60000);
-  });
-
-  function updateViolationOverlays(classDetails) {
-    violationOverlays.innerHTML = '';
-    
-    // Map of class IDs to violation types (adjust based on your class mappings)
-    const classNames = {
-            4:"No-Gloves",
-             5:"No-Goggles",
-             6:"No-Helmet",
-             7:"No-Mask",
-             8:"No-Safety_Vest",
-    };
-
-    Object.entries(classDetails).forEach(([classId, count]) => {
-      if (count > 0 && classNames[classId]) {
-        const overlay = document.createElement('div');
-        overlay.className = 'bg-red-500 text-white px-2 py-1 rounded text-sm font-semibold';
-        overlay.innerHTML = `🚫 ${classNames[classId]} (${count})`;
-        violationOverlays.appendChild(overlay);
-      }
-    });
-  }
-
-  function updateAlertCount(change) {
-    activeAlerts = Math.max(0, activeAlerts + change);
-    alertStatusText.textContent = `${activeAlerts} Active Alerts`;
-    
-    if (activeAlerts === 0) {
-      alertStatus.className = 'w-3 h-3 bg-green-500 rounded-full mr-2';
-    } else {
-      alertStatus.className = 'w-3 h-3 bg-yellow-500 rounded-full mr-2';
-    }
-  }
-
-  function loadHistory() {
-        const classNames = {
-            4:"No-Gloves",
-             5:"No-Goggles",
-             6:"No-Helmet",
-             7:"No-Mask",
-             8:"No-Safety_Vest",
-    };
-    fetch('/api/history')
-  .then(res => res.json())
-  .then(data => {
-    historyContainer.innerHTML = '';
-    data.slice(0, 10).forEach(entry => { 
-      const div = document.createElement('div');
-      div.className = 'rounded p-4 border border-gray-200 shadow';
-
-      // Determine background color based on severity
-      let severityBgColorClass = '';
-      switch (entry.severity.toLowerCase()) {
-        case 'high':
-          severityBgColorClass = 'bg-red-100';
-          break;
-        case 'moderate':
-          severityBgColorClass = 'bg-orange-100';
-          break;
-        case 'low':
-          severityBgColorClass = 'bg-yellow-100';
-          break;
-        default:
-          severityBgColorClass = 'bg-gray-100';
-      }
-
-      div.classList.add(severityBgColorClass);
-
-      div.innerHTML = `
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <div><strong>Time:</strong> ${new Date(entry.timestamp).toLocaleTimeString()}</div>
-            <div><strong>Severity:</strong> <span class="capitalize">${entry.severity}</span></div>
-            <div><strong>Violations:</strong> 
-              ${
-                Object.entries(entry.class_counts)
-                  .map(([id, count]) => `${classNames[id] || id}: ${count}`)
-                  .join(', ')
-              }
+                </div>
             </div>
-          </div>
-          <div class="md:col-span-2">
-            <img src="data:image/jpeg;base64,${entry.frame}" class="rounded border border-gray-300 max-w-full max-h-32 object-contain">
-          </div>
+        </header>
+        
+        <div id="riskConfigModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h2 class="modal-title">⚙️ Risk Index Configuration</h2>
+                    <span class="close" onclick="closeRiskConfig()">×</span>
+                </div>
+                <div class="risk-config-grid">
+                    <div class="risk-item"><div class="risk-label">Gloves Risk</div><input type="number" class="risk-input" id="risk-no-gloves" min="0" max="1" step="0.1" value="0.5"></div>
+                    <div class="risk-item"><div class="risk-label">Goggles Risk</div><input type="number" class="risk-input" id="risk-no-goggles" min="0" max="1" step="0.1" value="0.5"></div>
+                    <div class="risk-item"><div class="risk-label">Helmet Risk</div><input type="number" class="risk-input" id="risk-no-helmet" min="0" max="1" step="0.1" value="0.5"></div>
+                    <div class="risk-item"><div class="risk-label">Mask Risk</div><input type="number" class="risk-input" id="risk-no-mask" min="0" max="1" step="0.1" value="0.5"></div>
+                    <div class="risk-item"><div class="risk-label">Safety Vest Risk</div><input type="number" class="risk-input" id="risk-no-safety-vest" min="0" max="1" step="0.1" value="0.5"></div>
+                </div>
+                <div class="modal-actions">
+                    <div id="config-status" style="flex-grow: 1;"></div>
+                    <button class="btn-secondary" onclick="resetRiskIndex()">🔄 Reset</button>
+                    <button class="config-btn" onclick="updateRiskIndex()">✅ Update</button>
+                </div>
+            </div>
         </div>
-      `;
-      historyContainer.appendChild(div);
-    });
-  })
-  .catch(err => {
-    console.error('Failed to load history:', err);
-    historyContainer.innerHTML = '<div class="text-gray-500 text-center">Failed to load history</div>';
-  });
-
-
-  }
-
-  // Load history every 10 seconds
-  setInterval(loadHistory, 10000);
-  loadHistory(); // Initial load
-
-  // Initialize clock
-  const now = new Date();
-  clock.textContent = now.toLocaleTimeString();
-  // Configuration panel functions
-function toggleConfigPanel() {
-  const panel = document.getElementById('config-panel');
-  panel.classList.toggle('hidden');
-  
-  // Re-create icons after toggling
-  setTimeout(() => {
-    if (typeof createIcons === 'function') {
-      createIcons({ icons });
-    }
-  }, 100);
-}
-
-function updateRiskIndex() {
-  const configStatus = document.getElementById('config-status');
-  
-  // Get values from input fields
-  const riskIndex = {
-    4: parseFloat(document.getElementById('risk-no-gloves').value),
-    5: parseFloat(document.getElementById('risk-no-goggles').value),
-    6: parseFloat(document.getElementById('risk-no-helmet').value),
-    7: parseFloat(document.getElementById('risk-no-mask').value),
-    8: parseFloat(document.getElementById('risk-no-safety-vest').value)
-  };
-
-  // Show loading status
-  configStatus.innerHTML = '<span class="text-blue-600">Updating...</span>';
-
-  // Send to Flask backend
-  fetch('/update-scheduler-job', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      risk_idx: riskIndex
-    })
-  })
-  .then(response => response.json())
-  .then(data => {
-    console.log('Risk index updated:', data);
-    configStatus.innerHTML = '<span class="text-green-600 flex items-center"><i data-lucide="check-circle" class="w-4 h-4 mr-1"></i>Updated successfully!</span>';
+        
+        <div class="connection-status" id="connection-status">
+            <div class="status-indicator" id="connection-indicator"></div>
+            <span id="connection-text">Connecting...</span>
+        </div>
+        
+        <div class="main-content">
+            <div class="video-section">
+                <div class="video-header">
+                    <h3>🎥 Live Camera Feed - Zone A</h3>
+                    <span id="monitoring-status">Idle</span>
+                </div>
+                <div class="video-feed-container">
+                    <img id="video-feed" src="" alt="Live feed from camera">
+                    <div id="video-placeholder">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">🎥</div>
+                        <div>Camera feed will appear here</div>
+                    </div>
+                    <div id="violation-overlays" class="violation-overlays"></div>
+                </div>
+            </div>
+            
+            <div class="violations-section">
+                <div class="violations-header">📜 Recent Detections History</div>
+                <div class="violations-list" id="history-container">
+                    <div style="text-align: center; padding: 2rem; color: #718096;">
+                        <div style="font-size: 2rem; margin-bottom: 1rem;">✅</div>
+                        <div>No history to display yet.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     
-    // Re-create icons
-    setTimeout(() => {
-      if (typeof createIcons === 'function') {
-        createIcons({ icons });
-      }
-    }, 100);
-    
-    // Clear status after 3 seconds
-    setTimeout(() => {
-      configStatus.innerHTML = '';
-    }, 3000);
-  })
-  .catch(error => {
-    console.error('Error updating risk index:', error);
-    configStatus.innerHTML = '<span class="text-red-600 flex items-center"><i data-lucide="x-circle" class="w-4 h-4 mr-1"></i>Update failed!</span>';
-    
-    // Re-create icons  
-    setTimeout(() => {
-      if (typeof createIcons === 'function') {
-        createIcons({ icons });
-      }
-    }, 100);
-    
-    // Clear status after 3 seconds
-    setTimeout(() => {
-      configStatus.innerHTML = '';
-    }, 3000);
-  });
-}
+    <script>
+        const socket = io();
+        let highRiskAlertsCount = 0;
 
-function resetRiskIndex() {
-  // Reset all inputs to default value of 0.5
-  document.getElementById('risk-no-gloves').value = 0.5;
-  document.getElementById('risk-no-goggles').value = 0.5;
-  document.getElementById('risk-no-helmet').value = 0.5;
-  document.getElementById('risk-no-mask').value = 0.5;
-  document.getElementById('risk-no-safety-vest').value = 0.5;
-  
-  const configStatus = document.getElementById('config-status');
-  configStatus.innerHTML = '<span class="text-blue-600">Reset to defaults</span>';
-  
-  // Clear status after 2 seconds
-  setTimeout(() => {
-    configStatus.innerHTML = '';
-  }, 2000);
-}
-</script>
+        // DOM Elements
+        const videoFeed = document.getElementById('video-feed');
+        const videoPlaceholder = document.getElementById('video-placeholder');
+        const connectionStatusEl = document.getElementById('connection-status');
+        const connectionTextEl = document.getElementById('connection-text');
+        const connectionIndicatorEl = document.getElementById('connection-indicator');
+        const monitoringStatusEl = document.getElementById('monitoring-status');
+        const historyContainer = document.getElementById('history-container');
+        const violationOverlays = document.getElementById('violation-overlays');
+        const configStatusEl = document.getElementById('config-status');
+        
+        // Stat Card Elements
+        const peopleCountEl = document.getElementById('people-count');
+        const violationCountEl = document.getElementById('violation-count');
+        const compliantCountEl = document.getElementById('compliant-count');
+        const activeAlertsEl = document.getElementById('active-alerts');
+        
+        const classNames = {
+            4: "No-Gloves", 5: "No-Goggles", 6: "No-Helmet",
+            7: "No-Mask", 8: "No-Safety_Vest"
+        };
+        
+        // --- Socket.IO Event Handlers ---
+        socket.on('connect', () => {
+            updateConnectionStatus('System Online', true);
+            console.log('Connected to server');
+        });
+        
+        socket.on('disconnect', () => {
+            updateConnectionStatus('System Offline', false);
+            console.log('Disconnected from server');
+        });
+        
+        socket.on('video_frame', (data) => {
+            videoFeed.src = `data:image/jpeg;base64,${data.frame}`;
+            videoPlaceholder.style.display = 'none';
+            videoFeed.style.display = 'block';
+            monitoringStatusEl.textContent = 'Monitoring Active 🟢';
+        });
+        
+        socket.on('frame_data', (data) => {
+            const { total = 0, violations = 0, compliant = 0, details = {} } = data.class_counts;
+            peopleCountEl.textContent = total;
+            violationCountEl.textContent = violations;
+            compliantCountEl.textContent = compliant;
+            updateViolationOverlays(details);
+        });
+        
+        socket.on('high_severity_alert', (data) => {
+            addHistoryItem(data, true);
+            highRiskAlertsCount++;
+            activeAlertsEl.textContent = highRiskAlertsCount;
+            showNotification('High Risk Alert!', `Severity: ${data.severity}`);
+        });
 
+        // --- UI Update Functions ---
+        function updateConnectionStatus(text, isConnected) {
+            connectionTextEl.textContent = text;
+            connectionIndicatorEl.style.background = isConnected ? '#16a34a' : '#dc2626';
+            if(isConnected) {
+                connectionStatusEl.classList.add('ws-connected');
+                connectionStatusEl.classList.remove('ws-disconnected');
+            } else {
+                connectionStatusEl.classList.add('ws-disconnected');
+                connectionStatusEl.classList.remove('ws-connected');
+            }
+        }
+        
+        function updateViolationOverlays(details) {
+            violationOverlays.innerHTML = '';
+            Object.entries(details).forEach(([classId, count]) => {
+                if (count > 0 && classNames[classId]) {
+                    const overlay = document.createElement('div');
+                    overlay.className = 'violation-overlay';
+                    overlay.innerHTML = `🚫 ${classNames[classId]} (${count})`;
+                    violationOverlays.appendChild(overlay);
+                }
+            });
+        }
+
+        function addHistoryItem(entry, isNew) {
+            if (historyContainer.querySelector('[style*="No history"]')) {
+                historyContainer.innerHTML = '';
+            }
+
+            const item = document.createElement('div');
+            const severity = entry.severity.toLowerCase();
+            item.className = `violation-item ${severity}`; // Keep your existing class structure
+
+            const missingPPEBadges = Object.entries(entry.class_counts)
+                .filter(([id, count]) => count > 0 && classNames[id])
+                .map(([id]) => `<span class="missing-ppe-badge">${classNames[id]}</span>`)
+                .join('') || 'None';
+
+            item.innerHTML = `
+                <div class="violation-header-item">
+                    <div class="violation-zone">Zone A</div>
+                    <span class="violation-severity severity-${severity}">${severity}</span>
+                </div>
+                <div class="violation-details">
+                    <strong>Missing PPE:</strong><br>
+                    <div style="margin-top: 0.5rem;">${missingPPEBadges}</div>
+                </div>
+                ${entry.frame ? `
+                    <div style="margin-top: 1rem; text-align: center;">
+                        <img src="data:image/jpeg;base64,${entry.frame}" 
+                            style="max-width: 100%; height: auto; border-radius: 8px; border: 1px solid #e2e8f0; object-fit: contain; max-height: 120px;">
+                    </div>` : ''}
+                <div class="violation-timestamp">🕒 ${new Date(entry.timestamp).toLocaleString()}</div>
+            `;
+
+            historyContainer.insertBefore(item, historyContainer.firstChild);
+
+            if (isNew) {
+                item.style.opacity = '0';
+                item.style.transform = 'translateX(-20px)';
+                setTimeout(() => {
+                    item.style.transition = 'all 0.5s ease';
+                    item.style.opacity = '1';
+                    item.style.transform = 'translateX(0)';
+                }, 100);
+            }
+
+            while (historyContainer.children.length > 20) {
+                historyContainer.removeChild(historyContainer.lastChild);
+            }
+        }
+
+        function showNotification(title, body) {
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification(title, { body: body, icon: '/static/warning-icon.png' });
+            }
+        }
+        
+        // --- API & Data Functions ---
+        async function loadHistory() {
+            try {
+                const response = await fetch('/api/history');
+                const data = await response.json();
+
+                historyContainer.innerHTML = ''; // Clear existing history
+
+                if (data.length === 0) {
+                    historyContainer.innerHTML = `<div style="text-align: center; padding: 2rem; color: #718096;"><div style="font-size: 2rem; margin-bottom: 1rem;">✅</div><div>No history to display yet.</div></div>`;
+                    return;
+                }
+
+                // Add each history item, ensuring the frame data is passed
+                data.slice(0, 10).forEach(entry => addHistoryItem(entry, false));
+            } catch (error) {
+                console.error('Failed to load history:', error);
+                historyContainer.innerHTML = `<div style="text-align: center; padding: 2rem; color: #dc2626;"><div style="font-size: 2rem; margin-bottom: 1rem;">❌</div><div>Failed to load history.</div></div>`;
+            }
+        }
+
+
+        // --- Risk Configuration Functions ---
+        function openRiskConfig() { document.getElementById('riskConfigModal').style.display = 'block'; }
+        function closeRiskConfig() { document.getElementById('riskConfigModal').style.display = 'none'; }
+        
+        function resetRiskIndex() {
+            ['risk-no-gloves', 'risk-no-goggles', 'risk-no-helmet', 'risk-no-mask', 'risk-no-safety-vest']
+                .forEach(id => document.getElementById(id).value = 0.5);
+            configStatusEl.innerHTML = '<span style="color: #667eea;">Reset to defaults.</span>';
+            setTimeout(() => { configStatusEl.innerHTML = ''; }, 2000);
+        }
+        
+        async function updateRiskIndex() {
+            const riskIndex = {
+                4: parseFloat(document.getElementById('risk-no-gloves').value),
+                5: parseFloat(document.getElementById('risk-no-goggles').value),
+                6: parseFloat(document.getElementById('risk-no-helmet').value),
+                7: parseFloat(document.getElementById('risk-no-mask').value),
+                8: parseFloat(document.getElementById('risk-no-safety-vest').value)
+            };
+            
+            for (const value of Object.values(riskIndex)) {
+                if (isNaN(value) || value < 0 || value > 1) {
+                    configStatusEl.innerHTML = '<span style="color: #dc2626;">Invalid value. Use numbers between 0 and 1.</span>';
+                    return;
+                }
+            }
+            
+            configStatusEl.innerHTML = '<span style="color: #667eea;">Updating...</span>';
+            
+            try {
+                const response = await fetch('/update-scheduler-job', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ risk_idx: riskIndex })
+                });
+                await response.json();
+                configStatusEl.innerHTML = '<span style="color: #16a34a;">Updated successfully!</span>';
+                setTimeout(() => {
+                    configStatusEl.innerHTML = '';
+                    closeRiskConfig();
+                }, 2000);
+            } catch (error) {
+                console.error('Error updating risk index:', error);
+                configStatusEl.innerHTML = '<span style="color: #dc2626;">Update failed!</span>';
+                setTimeout(() => { configStatusEl.innerHTML = ''; }, 3000);
+            }
+        }
+        
+        // --- Initialization ---
+        document.addEventListener('DOMContentLoaded', () => {
+            videoFeed.style.display = 'none'; // Hide img tag initially
+            if ('Notification' in window && Notification.permission !== 'granted') {
+                Notification.requestPermission();
+            }
+            loadHistory();
+            setInterval(loadHistory, 15000); // Fetch history every 15 seconds
+        });
+        
+        window.onclick = (event) => {
+            if (event.target == document.getElementById('riskConfigModal')) {
+                closeRiskConfig();
+            }
+        };
+    </script>
 </body>
 </html>

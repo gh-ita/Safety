@@ -139,12 +139,12 @@ def main():
 
     positional_tracking_parameters = sl.PositionalTrackingParameters()
     # If the camera is static, uncomment the following line to have better performances and boxes sticked to the ground.
-    # positional_tracking_parameters.set_as_static = True
+    positional_tracking_parameters.set_as_static = True
     zed.enable_positional_tracking(positional_tracking_parameters)
 
     obj_param = sl.ObjectDetectionParameters()
     obj_param.detection_model = sl.OBJECT_DETECTION_MODEL.CUSTOM_BOX_OBJECTS
-    obj_param.enable_tracking = True
+    obj_param.enable_tracking = False
     obj_param.enable_segmentation = False #ned to give person pixel mask with internal OD
     zed.enable_object_detection(obj_param) 
 
@@ -165,7 +165,10 @@ def main():
     image_left = sl.Mat()
 
     # Utilities for 2D display
-    display_resolution = sl.Resolution(min(camera_res.width, 1280), min(camera_res.height, 720))
+    display_resolution = sl.Resolution(1920, 720)
+    image_scale = [display_resolution.width / camera_res.width, display_resolution.height / camera_res.height]
+
+    display_resolution = sl.Resolution(min(camera_res.width, 1920), min(camera_res.height, 720))
     image_scale = [display_resolution.width / camera_res.width, display_resolution.height / camera_res.height]
     image_left_ocv = np.full((display_resolution.height, display_resolution.width, 4), [245, 239, 239, 255], np.uint8)
 
@@ -212,12 +215,12 @@ def main():
             cv_viewer.render_2D(image_left_ocv, image_scale, objects, obj_param.enable_tracking)
 
             with shared_state.lock:
-                shared_state.global_image = cv2.hconcat([image_left_ocv, image_track_ocv])
-
+                shared_state.global_image = cv2.hconcat([image_left_ocv])
+                
             # Tracking view
-            #track_view_generator.generate_view(objects, cam_w_pose, image_track_ocv, objects.is_tracked)
+            track_view_generator.generate_view(objects, cam_w_pose, image_track_ocv, objects.is_tracked)
             
-            cv2.imshow("ZED | 2D View and Birds View", shared_state.global_image)
+            cv2.imshow("ZED", shared_state.global_image)
             key = cv2.waitKey(10)
             if key == 27 or key == ord('q') or key == ord('Q'):
                 exit_signal = True
@@ -265,12 +268,12 @@ def start_camera(opt):
 
     positional_tracking_parameters = sl.PositionalTrackingParameters()
     # If the camera is static, uncomment the following line to have better performances and boxes sticked to the ground.
-    # positional_tracking_parameters.set_as_static = True
+    positional_tracking_parameters.set_as_static = True
     zed.enable_positional_tracking(positional_tracking_parameters)
 
     obj_param = sl.ObjectDetectionParameters()
     obj_param.detection_model = sl.OBJECT_DETECTION_MODEL.CUSTOM_BOX_OBJECTS
-    obj_param.enable_tracking = True
+    obj_param.enable_tracking = False
     obj_param.enable_segmentation = False #ned to give person pixel mask with internal OD
     zed.enable_object_detection(obj_param) 
 
@@ -297,8 +300,8 @@ def start_camera(opt):
     # Utilities for tracks view
     camera_config = camera_infos.camera_configuration
     tracks_resolution = sl.Resolution(400, display_resolution.height)
-    track_view_generator = cv_viewer.TrackingViewer(tracks_resolution, camera_config.fps, init_params.depth_maximum_distance)
-    track_view_generator.set_camera_calibration(camera_config.calibration_parameters)
+    #track_view_generator = cv_viewer.TrackingViewer(tracks_resolution, camera_config.fps, init_params.depth_maximum_distance)
+    #track_view_generator.set_camera_calibration(camera_config.calibration_parameters)
     image_track_ocv = np.zeros((tracks_resolution.height, tracks_resolution.width, 4), np.uint8)
     # Camera pose
     cam_w_pose = sl.Pose()
@@ -337,7 +340,8 @@ def start_camera(opt):
             cv_viewer.render_2D(image_left_ocv, image_scale, objects, obj_param.enable_tracking)
 
             with shared_state.lock:
-                shared_state.global_image = cv2.hconcat([image_left_ocv, image_track_ocv])
+                shared_state.global_image = image_left_ocv.copy()
+
 
             # Tracking view
             #track_view_generator.generate_view(objects, cam_w_pose, image_track_ocv, objects.is_tracked)
